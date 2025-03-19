@@ -5,12 +5,23 @@ from functools import lru_cache
 import pandas as pd
 from datetime import datetime
 import json
+import os
 
 app = Flask(__name__)
 
 # Conectar con Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+
+# Leer las credenciales desde la variable de entorno GOOGLE_CREDENTIALS
+credentials_json = os.getenv('GOOGLE_CREDENTIALS')
+if not credentials_json:
+    raise ValueError("La variable de entorno GOOGLE_CREDENTIALS no está configurada")
+
+# Convertir la cadena JSON en un diccionario
+credentials_dict = json.loads(credentials_json)
+
+# Cargar las credenciales desde el diccionario
+creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 client = gspread.authorize(creds)
 
 try:
