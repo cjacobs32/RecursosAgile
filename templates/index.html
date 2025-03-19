@@ -17,7 +17,7 @@
             padding: 10px 20px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between; /* Cambiado para incluir el enlace de logout */
             color: #FFFFFF;
         }
         .header h1 {
@@ -25,11 +25,21 @@
             font-size: 24px;
             font-weight: 500;
         }
+        .header .user-info {
+            font-size: 14px;
+        }
+        .header .user-info a {
+            color: #FFFFFF;
+            text-decoration: underline;
+        }
+        .header .user-info a:hover {
+            color: #E0E0E0;
+        }
         .container {
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
-            position: relative; /* Para posicionar el botón de recargar */
+            position: relative;
         }
         .reload-btn-container {
             position: absolute;
@@ -172,51 +182,60 @@
 <body>
     <div class="header">
         <h1>Personas en Agilidad</h1>
+        <!-- Mostrar enlace de logout -->
+        {% if session.username %}
+            <div class="user-info">
+                <span>Usuario: {{ session.username }} ({{ session.role }}) | </span>
+                <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            </div>
+        {% endif %}
     </div>
     <div class="container">
         <div class="reload-btn-container">
-            <button class="btn-reload" onclick="reloadData()"><i class="fas fa-sync"></i> Recargar Datos</button>
+            <button class="btn-reload" id="reloadBtn"><i class="fas fa-sync"></i> Recargar Datos</button>
         </div>
         <div class="section">
             <h3>Filtros</h3>
             <div class="row">
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="tren" class="form-control" placeholder="Filtrar por Tren" oninput="filterSuggestions('tren', [])">
+                    <input type="text" id="trenFilter" class="form-control" placeholder="Filtrar por Tren">
                     <div id="tren-suggestions" class="autocomplete-items"></div>
                 </div>
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="equipo" class="form-control" placeholder="Filtrar por Equipo Agil" oninput="filterSuggestions('equipo', [])">
+                    <input type="text" id="equipoFilter" class="form-control" placeholder="Filtrar por Equipo Ágil">
                     <div id="equipo-suggestions" class="autocomplete-items"></div>
                 </div>
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="embajador" class="form-control" placeholder="Filtrar por Embajador" oninput="filterSuggestions('embajador', [])">
+                    <input type="text" id="embajadorFilter" class="form-control" placeholder="Filtrar por Embajador">
                     <div id="embajador-suggestions" class="autocomplete-items"></div>
                 </div>
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="externo" class="form-control" placeholder="Filtrar por Externo/TEF" oninput="filterSuggestions('externo', [])">
+                    <input type="text" id="externoFilter" class="form-control" placeholder="Filtrar por Externo/TEF">
                     <div id="externo-suggestions" class="autocomplete-items"></div>
                 </div>
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="po" class="form-control" placeholder="Filtrar por PO" oninput="filterSuggestions('po', [])">
+                    <input type="text" id="poFilter" class="form-control" placeholder="Filtrar por PO">
                     <div id="po-suggestions" class="autocomplete-items"></div>
                 </div>
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="sm" class="form-control" placeholder="Filtrar por SM" oninput="filterSuggestions('sm', [])">
+                    <input type="text" id="smFilter" class="form-control" placeholder="Filtrar por SM">
                     <div id="sm-suggestions" class="autocomplete-items"></div>
                 </div>
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="facilitador" class="form-control" placeholder="Filtrar por Facilitador Disciplina" oninput="filterSuggestions('facilitador', [])">
+                    <input type="text" id="facilitadorFilter" class="form-control" placeholder="Filtrar por Facilitador Disciplina">
                     <div id="facilitador-suggestions" class="autocomplete-items"></div>
                 </div>
                 <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="search" class="form-control" placeholder="Búsqueda global" oninput="fetchData(1)">
+                    <input type="text" id="globalSearch" class="form-control" placeholder="Búsqueda global">
                     <div id="search-suggestions" class="autocomplete-items"></div>
                 </div>
             </div>
-            <button class="btn-custom" onclick="exportToCSV()"><i class="fas fa-download"></i> Exportar a CSV</button>
-            <button class="btn-custom" onclick="toggleHistory()"><i class="fas fa-history"></i> Ver Historial</button>
+            <button class="btn-custom" id="exportBtn"><i class="fas fa-download"></i> Exportar a CSV</button>
+            <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
             <button class="btn-custom" onclick="clearFilters()"><i class="fas fa-eraser"></i> Limpiar Filtros</button>
-            <button class="btn-custom" onclick="insertRow()">Insertar Fila</button>
+            {% if role == 'Editor' %}
+            <button class="btn-custom" id="addRowBtn"><i class="fas fa-plus"></i> Insertar Fila</button>
+            {% endif %}
         </div>
 
         <div class="section">
@@ -229,13 +248,13 @@
             <table class="table" id="dataTable">
                 <thead>
                     <tr>
-                        <th onclick="sortTable('Tren')">Tren</th>
-                        <th onclick="sortTable('Equipo Agil')">Equipo Agil</th>
-                        <th onclick="sortTable('Embajador')">Embajador</th>
-                        <th onclick="sortTable('Externo/TEF')">Externo/TEF</th>
-                        <th onclick="sortTable('PO')">PO</th>
-                        <th onclick="sortTable('SM')">SM</th>
-                        <th onclick="sortTable('Facilitador Disciplina')">Facilitador Disciplina</th>
+                        <th data-sort="Tren">Tren</th>
+                        <th data-sort="Equipo Agil">Equipo Ágil</th>
+                        <th data-sort="Embajador">Embajador</th>
+                        <th data-sort="Externo/TEF">Externo/TEF</th>
+                        <th data-sort="PO">PO</th>
+                        <th data-sort="SM">SM</th>
+                        <th data-sort="Facilitador Disciplina">Facilitador Disciplina</th>
                         <th>Acción</th>
                     </tr>
                 </thead>
@@ -250,329 +269,358 @@
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    let currentPage = 1;
-    const perPage = 10;
-    let sortBy = 'Tren';
-    let sortOrder = 'asc';
+        // Definir el rol del usuario como variable de JavaScript
+        const userRole = "{{ role }}";
 
-    function showLoadingSpinner() {
-        document.getElementById('loading-spinner').style.display = 'block';
-    }
+        let currentPage = 1;
+        const perPage = 10;
+        let sortBy = 'Tren';
+        let sortOrder = 'asc';
 
-    function hideLoadingSpinner() {
-        document.getElementById('loading-spinner').style.display = 'none';
-    }
-
-    function fetchData(page = 1) {
-        currentPage = page;
-        const tren = document.getElementById('tren').value;
-        const equipo = document.getElementById('equipo').value;
-        const embajador = document.getElementById('embajador').value;
-        const externo = document.getElementById('externo').value;
-        const po = document.getElementById('po').value;
-        const sm = document.getElementById('sm').value;
-        const facilitador = document.getElementById('facilitador').value;
-        const search = document.getElementById('search').value;
-
-        showLoadingSpinner();
-
-        fetch(`/api/datos?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}&sort_by=${sortBy}&sort_order=${sortOrder}&page=${page}&per_page=${perPage}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error en la respuesta del servidor');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = '';
-                const noDataMessage = document.getElementById('no-data-message');
-                if (data.total === 0) {
-                    noDataMessage.textContent = data.message || 'No se encontraron datos';
-                    noDataMessage.style.display = 'block';
-                } else {
-                    noDataMessage.style.display = 'none';
-                    data.data.forEach((row) => {
-                        const rowIndex = row.row_index;
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="editable-cell" data-row="${rowIndex}" data-column="Tren">${row['Tren'] || '-'}</td>
-                            <td class="editable-cell" data-row="${rowIndex}" data-column="Equipo Agil">${row['Equipo Agil'] || '-'}</td>
-                            <td class="editable-cell" data-row="${rowIndex}" data-column="Embajador">${row['Embajador'] || '-'}</td>
-                            <td class="editable-cell" data-row="${rowIndex}" data-column="Externo/TEF">${row['Externo/TEF'] || '-'}</td>
-                            <td class="editable-cell" data-row="${rowIndex}" data-column="PO">${row['PO'] || '-'}</td>
-                            <td class="editable-cell" data-row="${rowIndex}" data-column="SM">${row['SM'] || '-'}</td>
-                            <td class="editable-cell" data-row="${rowIndex}" data-column="Facilitador Disciplina">${row['Facilitador Disciplina'] || '-'}</td>
-                            <td class="action-cell">
-                                <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
-                                <span class="confirm-btn" onclick="confirmEditRow(this, ${rowIndex})"><i class="fas fa-check"></i></span>
-                                <span class="delete-btn" onclick="deleteRow(${rowIndex})"><i class="fas fa-times"></i></span>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-                updatePagination(data.total);
-            })
-            .catch(err => {
-                console.error('Error fetching data:', err);
-                const noDataMessage = document.getElementById('no-data-message');
-                noDataMessage.textContent = 'Error al cargar los datos';
-                noDataMessage.style.display = 'block';
-            })
-            .finally(() => {
-                hideLoadingSpinner();
-            });
-    }
-
-    function updatePagination(total) {
-        const pagination = document.getElementById('pagination');
-        pagination.innerHTML = '';
-        const totalPages = Math.ceil(total / perPage);
-
-        for (let i = 1; i <= totalPages; i++) {
-            const li = document.createElement('li');
-            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            const a = document.createElement('a');
-            a.className = 'page-link';
-            a.textContent = i;
-            a.href = '#';
-            a.addEventListener('click', (e) => {
-                e.preventDefault();
-                fetchData(i);
-            });
-            li.appendChild(a);
-            pagination.appendChild(li);
+        function showLoadingSpinner() {
+            document.getElementById('loading-spinner').style.display = 'block';
         }
-    }
 
-    function exportToCSV() {
-        const tren = document.getElementById('tren').value;
-        const equipo = document.getElementById('equipo').value;
-        const embajador = document.getElementById('embajador').value;
-        const externo = document.getElementById('externo').value;
-        const po = document.getElementById('po').value;
-        const sm = document.getElementById('sm').value;
-        const facilitador = document.getElementById('facilitador').value;
-        const search = document.getElementById('search').value;
+        function hideLoadingSpinner() {
+            document.getElementById('loading-spinner').style.display = 'none';
+        }
 
-        window.location.href = `/api/export?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}`;
-    }
+        function fetchData(page = 1) {
+            currentPage = page;
+            const tren = document.getElementById('trenFilter').value;
+            const equipo = document.getElementById('equipoFilter').value;
+            const embajador = document.getElementById('embajadorFilter').value;
+            const externo = document.getElementById('externoFilter').value;
+            const po = document.getElementById('poFilter').value;
+            const sm = document.getElementById('smFilter').value;
+            const facilitador = document.getElementById('facilitadorFilter').value;
+            const search = document.getElementById('globalSearch').value;
 
-    function clearFilters() {
-        document.querySelectorAll('input.form-control').forEach(input => {
-            input.value = '';
-            const suggestions = document.getElementById(`${input.id}-suggestions`);
-            if (suggestions) suggestions.innerHTML = '';
-        });
-        fetchData(1);
-    }
+            showLoadingSpinner();
 
-    function reloadData() {
-        showLoadingSpinner();
-        fetch('/api/reload')
-            .then(response => response.json())
-            .then(data => {
-                const noDataMessage = document.getElementById('no-data-message');
-                if (data.total === 0) {
-                    noDataMessage.textContent = data.message || 'No se encontraron datos';
+            fetch(`/api/datos?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}&sort_by=${sortBy}&sort_order=${sortOrder}&page=${page}&per_page=${perPage}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const tbody = document.getElementById('tableBody');
+                    tbody.innerHTML = '';
+                    const noDataMessage = document.getElementById('no-data-message');
+                    if (data.total === 0) {
+                        noDataMessage.textContent = data.message || 'No se encontraron datos';
+                        noDataMessage.style.display = 'block';
+                    } else {
+                        noDataMessage.style.display = 'none';
+                        data.data.forEach((row) => {
+                            const rowIndex = row.row_index;
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Tren">${row['Tren'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Equipo Agil">${row['Equipo Agil'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Embajador">${row['Embajador'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Externo/TEF">${row['Externo/TEF'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="PO">${row['PO'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="SM">${row['SM'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Facilitador Disciplina">${row['Facilitador Disciplina'] || '-'}</td>
+                                <td class="action-cell">
+                                    ${userRole === 'Editor' ? `
+                                        <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
+                                        <span class="confirm-btn" onclick="confirmEditRow(this, ${rowIndex})"><i class="fas fa-check"></i></span>
+                                        <span class="delete-btn" onclick="deleteRow(${rowIndex})"><i class="fas fa-times"></i></span>
+                                    ` : ''}
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                    updatePagination(data.total);
+                })
+                .catch(err => {
+                    console.error('Error fetching data:', err);
+                    const noDataMessage = document.getElementById('no-data-message');
+                    noDataMessage.textContent = 'Error al cargar los datos';
                     noDataMessage.style.display = 'block';
-                } else {
-                    noDataMessage.style.display = 'none';
-                    fetchData(1);
-                }
-            })
-            .catch(err => {
-                console.error('Error reloading data:', err);
-                const noDataMessage = document.getElementById('no-data-message');
-                noDataMessage.textContent = 'Error al recargar los datos';
-                noDataMessage.style.display = 'block';
-            })
-            .finally(() => {
-                hideLoadingSpinner();
-            });
-    }
+                })
+                .finally(() => {
+                    hideLoadingSpinner();
+                });
+        }
 
-    function startEditRow(button, rowIndex) {
-        const row = button.closest('tr');
-        const cells = row.querySelectorAll('.editable-cell');
-        const oldValues = {};
+        function updatePagination(total) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            const totalPages = Math.ceil(total / perPage);
 
-        cells.forEach(cell => {
-            const column = cell.getAttribute('data-column');
-            oldValues[column] = cell.textContent.trim();
-            cell.classList.add('editing');
-            cell.setAttribute('contenteditable', 'true');
-        });
-
-        button.style.display = 'none';
-        row.querySelector('.confirm-btn').style.display = 'inline-block';
-        row.dataset.oldValues = JSON.stringify(oldValues);
-    }
-
-    function confirmEditRow(button, rowIndex) {
-        const row = button.closest('tr');
-        const cells = row.querySelectorAll('.editable-cell');
-        const oldValues = JSON.parse(row.dataset.oldValues || '{}');
-        const updates = [];
-        let hasChanges = false;
-
-        cells.forEach(cell => {
-            const column = cell.getAttribute('data-column');
-            const newValue = cell.textContent.trim();
-            const oldValue = oldValues[column] || '';
-
-            if (newValue !== oldValue) {
-                hasChanges = true;
-                updates.push({ row: rowIndex, column, value: newValue });
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.textContent = i;
+                a.href = '#';
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    fetchData(i);
+                });
+                li.appendChild(a);
+                pagination.appendChild(li);
             }
-            cell.classList.remove('editing');
-            cell.removeAttribute('contenteditable');
-        });
-
-        if (!hasChanges) {
-            button.style.display = 'none';
-            row.querySelector('.edit-btn').style.display = 'inline-block';
-            return;
         }
 
-        if (confirm(`¿Seguro que quieres guardar los cambios en la fila ${rowIndex}?`)) {
-            Promise.all(updates.map(update => 
-                fetch('/api/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(update)
-                }).then(response => response.json())
-            ))
-            .then(results => {
-                const errors = results.filter(r => r.error);
-                if (errors.length > 0) {
+        function exportToCSV() {
+            const tren = document.getElementById('trenFilter').value;
+            const equipo = document.getElementById('equipoFilter').value;
+            const embajador = document.getElementById('embajadorFilter').value;
+            const externo = document.getElementById('externoFilter').value;
+            const po = document.getElementById('poFilter').value;
+            const sm = document.getElementById('smFilter').value;
+            const facilitador = document.getElementById('facilitadorFilter').value;
+            const search = document.getElementById('globalSearch').value;
+
+            window.location.href = `/api/export?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}`;
+        }
+
+        function clearFilters() {
+            document.querySelectorAll('input.form-control').forEach(input => {
+                input.value = '';
+                const suggestions = document.getElementById(`${input.id}-suggestions`);
+                if (suggestions) suggestions.innerHTML = '';
+            });
+            fetchData(1);
+        }
+
+        document.getElementById('reloadBtn').addEventListener('click', function() {
+            showLoadingSpinner();
+            fetch('/api/reload')
+                .then(response => response.json())
+                .then(data => {
+                    const noDataMessage = document.getElementById('no-data-message');
+                    if (data.total === 0) {
+                        noDataMessage.textContent = data.message || 'No se encontraron datos';
+                        noDataMessage.style.display = 'block';
+                    } else {
+                        noDataMessage.style.display = 'none';
+                        fetchData(1);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error reloading data:', err);
+                    const noDataMessage = document.getElementById('no-data-message');
+                    noDataMessage.textContent = 'Error al recargar los datos';
+                    noDataMessage.style.display = 'block';
+                })
+                .finally(() => {
+                    hideLoadingSpinner();
+                });
+        });
+
+        function startEditRow(button, rowIndex) {
+            if (userRole !== 'Editor') {
+                alert('No tienes permisos para editar datos.');
+                return;
+            }
+            const row = button.closest('tr');
+            const cells = row.querySelectorAll('.editable-cell');
+            const oldValues = {};
+
+            cells.forEach(cell => {
+                const column = cell.getAttribute('data-column');
+                oldValues[column] = cell.textContent.trim();
+                cell.classList.add('editing');
+                cell.setAttribute('contenteditable', 'true');
+            });
+
+            button.style.display = 'none';
+            row.querySelector('.confirm-btn').style.display = 'inline-block';
+            row.dataset.oldValues = JSON.stringify(oldValues);
+        }
+
+        function confirmEditRow(button, rowIndex) {
+            const row = button.closest('tr');
+            const cells = row.querySelectorAll('.editable-cell');
+            const oldValues = JSON.parse(row.dataset.oldValues || '{}');
+            const updates = [];
+            let hasChanges = false;
+
+            cells.forEach(cell => {
+                const column = cell.getAttribute('data-column');
+                const newValue = cell.textContent.trim();
+                const oldValue = oldValues[column] || '';
+
+                if (newValue !== oldValue) {
+                    hasChanges = true;
+                    updates.push({ row: rowIndex, column, value: newValue });
+                }
+                cell.classList.remove('editing');
+                cell.removeAttribute('contenteditable');
+            });
+
+            if (!hasChanges) {
+                button.style.display = 'none';
+                row.querySelector('.edit-btn').style.display = 'inline-block';
+                return;
+            }
+
+            if (confirm(`¿Seguro que quieres guardar los cambios en la fila ${rowIndex}?`)) {
+                Promise.all(updates.map(update => 
+                    fetch('/api/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(update)
+                    }).then(response => response.json())
+                ))
+                .then(results => {
+                    const errors = results.filter(r => r.error);
+                    if (errors.length > 0) {
+                        const errorMessage = document.getElementById('error-message');
+                        errorMessage.textContent = errors.map(e => e.error).join(', ');
+                        errorMessage.style.display = 'block';
+                        setTimeout(() => { errorMessage.style.display = 'none'; }, 2000);
+                    } else {
+                        const message = document.getElementById('message');
+                        message.textContent = 'Fila actualizada correctamente';
+                        message.style.display = 'block';
+                        setTimeout(() => { message.style.display = 'none'; }, 2000);
+                        fetchData(currentPage);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error updating row:', err);
                     const errorMessage = document.getElementById('error-message');
-                    errorMessage.textContent = errors.map(e => e.error).join(', ');
+                    errorMessage.textContent = 'Error al actualizar la fila';
                     errorMessage.style.display = 'block';
                     setTimeout(() => { errorMessage.style.display = 'none'; }, 2000);
-                } else {
-                    const message = document.getElementById('message');
-                    message.textContent = 'Fila actualizada correctamente';
-                    message.style.display = 'block';
-                    setTimeout(() => { message.style.display = 'none'; }, 2000);
-                    fetchData(currentPage);
-                }
-            })
-            .catch(err => {
-                console.error('Error updating row:', err);
-                const errorMessage = document.getElementById('error-message');
-                errorMessage.textContent = 'Error al actualizar la fila';
-                errorMessage.style.display = 'block';
-                setTimeout(() => { errorMessage.style.display = 'none'; }, 2000);
-            });
-        }
-    }
-
-    function sortTable(column) {
-        if (sortBy === column) {
-            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-        } else {
-            sortBy = column;
-            sortOrder = 'asc';
-        }
-        fetchData(1);
-    }
-
-    function toggleHistory() {
-        window.open('/history', '_blank');
-    }
-
-    function insertRow() {
-        const newRow = {
-            'Tren': prompt('Tren:') || '',
-            'Equipo Agil': prompt('Equipo Agil:') || '',
-            'Embajador': prompt('Embajador:') || '',
-            'Externo/TEF': prompt('Externo/TEF:') || '',
-            'PO': prompt('PO:') || '',
-            'SM': prompt('SM:') || '',
-            'Facilitador Disciplina': prompt('Facilitador Disciplina:') || ''
-        };
-        fetch('/api/insert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newRow)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) alert(data.error);
-            else {
-                fetchData(currentPage);
+                });
             }
-        });
-    }
+        }
 
-    function deleteRow(rowIndex) {
-        if (confirm(`¿Seguro que quieres eliminar la fila ${rowIndex}?`)) {
-            fetch('/api/delete', {
+        function sortTable(column) {
+            if (sortBy === column) {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortBy = column;
+                sortOrder = 'asc';
+            }
+            fetchData(1);
+        }
+
+        function deleteRow(rowIndex) {
+            if (userRole !== 'Editor') {
+                alert('No tienes permisos para eliminar datos.');
+                return;
+            }
+            if (confirm(`¿Seguro que quieres eliminar la fila ${rowIndex}?`)) {
+                fetch('/api/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ row: rowIndex })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        fetchData(currentPage);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error deleting row:', err);
+                    alert('Error al eliminar la fila');
+                });
+            }
+        }
+
+        function insertRow() {
+            if (userRole !== 'Editor') {
+                alert('No tienes permisos para insertar datos.');
+                return;
+            }
+            const newRow = {
+                'Tren': prompt('Tren:') || '',
+                'Equipo Agil': prompt('Equipo Agil:') || '',
+                'Embajador': prompt('Embajador:') || '',
+                'Externo/TEF': prompt('Externo/TEF:') || '',
+                'PO': prompt('PO:') || '',
+                'SM': prompt('SM:') || '',
+                'Facilitador Disciplina': prompt('Facilitador Disciplina:') || ''
+            };
+            fetch('/api/insert', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ row: rowIndex })
+                body: JSON.stringify(newRow)
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } else {
+                if (data.error) alert(data.error);
+                else {
                     fetchData(currentPage);
                 }
-            })
-            .catch(err => {
-                console.error('Error deleting row:', err);
-                alert('Error al eliminar la fila');
             });
         }
-    }
 
-    function filterSuggestions(inputId, defaultSuggestions) {
-        const input = document.getElementById(inputId);
-        const suggestionsDiv = document.getElementById(`${inputId}-suggestions`);
-        suggestionsDiv.innerHTML = '';
+        function filterSuggestions(inputId, defaultSuggestions) {
+            const input = document.getElementById(inputId);
+            const suggestionsDiv = document.getElementById(`${inputId}-suggestions`);
+            suggestionsDiv.innerHTML = '';
 
-        if (!input.value) {
-            return;
-        }
+            if (!input.value) {
+                return;
+            }
 
-        showLoadingSpinner();
-        fetch('/api/datos')
-            .then(response => response.json())
-            .then(data => {
-                const allValues = data.data.flatMap(row => Object.values(row));
-                const uniqueValues = [...new Set(allValues)].filter(val => val && val.toLowerCase().includes(input.value.toLowerCase()));
-                const suggestions = defaultSuggestions.length > 0 ? defaultSuggestions.filter(s => s.toLowerCase().includes(input.value.toLowerCase())) : uniqueValues;
+            showLoadingSpinner();
+            fetch('/api/datos')
+                .then(response => response.json())
+                .then(data => {
+                    const allValues = data.data.flatMap(row => Object.values(row));
+                    const uniqueValues = [...new Set(allValues)].filter(val => val && val.toLowerCase().includes(input.value.toLowerCase()));
+                    const suggestions = defaultSuggestions.length > 0 ? defaultSuggestions.filter(s => s.toLowerCase().includes(input.value.toLowerCase())) : uniqueValues;
 
-                suggestions.forEach(suggestion => {
-                    const div = document.createElement('div');
-                    div.innerHTML = suggestion;
-                    div.addEventListener('click', () => {
-                        input.value = suggestion;
-                        suggestionsDiv.innerHTML = '';
-                        fetchData(1);
+                    suggestions.forEach(suggestion => {
+                        const div = document.createElement('div');
+                        div.innerHTML = suggestion;
+                        div.addEventListener('click', () => {
+                            input.value = suggestion;
+                            suggestionsDiv.innerHTML = '';
+                            fetchData(1);
+                        });
+                        suggestionsDiv.appendChild(div);
                     });
-                    suggestionsDiv.appendChild(div);
+                })
+                .catch(err => {
+                    console.error('Error fetching suggestions:', err);
+                })
+                .finally(() => {
+                    hideLoadingSpinner();
                 });
-            })
-            .catch(err => {
-                console.error('Error fetching suggestions:', err);
-            })
-            .finally(() => {
-                hideLoadingSpinner();
+        }
+
+        // Event listeners para los filtros
+        document.querySelectorAll('input.form-control').forEach(input => {
+            input.addEventListener('input', () => {
+                if (input.id !== 'globalSearch') {
+                    filterSuggestions(input.id, []);
+                }
+                fetchData(1);
             });
-    }
-
-    document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('input', () => {
-            if (input.id !== 'search') fetchData(1);
         });
-    });
 
-    fetchData();
+        // Exportar a CSV
+        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+
+        // Insertar fila
+        const addRowBtn = document.getElementById('addRowBtn');
+        if (addRowBtn) {
+            addRowBtn.addEventListener('click', insertRow);
+        }
+
+        // Inicializar la tabla
+        fetchData();
     </script>
 </body>
 </html>

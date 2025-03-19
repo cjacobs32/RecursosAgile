@@ -1,4 +1,7 @@
-from flask import Flask, request, jsonify, render_template
+# RecursosAgile.py
+
+# Importar las librerías necesarias
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, send_file
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from functools import lru_cache
@@ -6,15 +9,13 @@ import pandas as pd
 from datetime import datetime
 import json
 import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
+# Inicializar la aplicación Flask
 app = Flask(__name__)
+app.secret_key = "clave_secreta_muy_segura_123"  # Cambia esto por una clave secreta más segura
 
 # Conectar con Google Sheets
-import os
-import json
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
-
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 # Intentar leer desde la variable de entorno (para Render)
@@ -38,16 +39,83 @@ client = gspread.authorize(creds)
 try:
     sheet = client.open("Datos de Equipos").sheet1  # Hoja principal
     history_sheet = client.open("Datos de Equipos").worksheet("Historial")  # Hoja para historial
+    # Conectar a la hoja de usuarios
+    user_sheet = client.open("Datos de Equipos").worksheet("Usuarios")  # Hoja para usuarios
 except gspread.exceptions.SpreadsheetNotFound:
     raise Exception("La hoja 'Datos de Equipos' no fue encontrada. Verifica el nombre.")
-except gspread.exceptions.WorksheetNotFound:
+except gspread.exceptions.WorksheetNotFound as e:
     # Crear hoja de historial si no existe
-    sheet = client.open("Datos de Equipos").sheet1
-    history_sheet = client.open("Datos de Equipos").add_worksheet(title="Historial", rows="100", cols="7")
-    history_sheet.append_row(["Fila", "Columna", "Valor Anterior", "Nuevo Valor", "Usuario", "Fecha", "Observaciones"])
+    if "Historial" in str(e):
+        sheet = client.open("Datos de Equipos").sheet1
+        history_sheet = client.open("Datos de Equipos").add_worksheet(title="Historial", rows="100", cols="7")
+        history_sheet.append_row(["Fila", "Columna", "Valor Anterior", "Nuevo Valor", "Usuario", "Fecha", "Observaciones"])
+    # Crear hoja de usuarios si no existe
+    elif "Usuarios" in str(e):
+        user_sheet = client.open("Datos de Equipos").add_worksheet(title="Usuarios", rows="100", cols="3")
+        user_sheet.append_row(["Username", "Password", "Role"])
+        # Añadir usuarios de prueba
+        user_sheet.append_row(["lector1", "pass123", "Lector"])
+        user_sheet.append_row(["editor1", "pass456", "Editor"])
+    else:
+        raise e
 
 # Historial en memoria (sincronizado con la hoja)
 history = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)
+
+# Decorador para requerir login
+def login_required(f):
+    def wrap(*args, **kwargs):
+        if 'username' not in session:
+            flash("Por favor, inicia sesión para acceder a esta página.", "error")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    wrap.__name__ = f.__name__  # Para evitar problemas con Flask
+    return wrap
+
+# Decorador para requerir rol de Editor
+def editor_required(f):
+    def wrap(*args, **kwargs):
+        if 'role' not in session or session['role'] != 'Editor':
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'No tienes permisos para realizar esta acción'}), 403
+            flash("No tienes permisos para realizar esta acción.", "error")
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    wrap.__name__ = f.__name__  # Para evitar problemas con Flask
+    return wrap
+
+# Ruta para login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Obtener todos los usuarios de la hoja de Google Sheets
+        try:
+            users = user_sheet.get_all_records()
+            for user in users:
+                if user['Username'] == username:
+                    # Verificar la contraseña (por ahora en texto plano; más adelante podemos encriptar)
+                    if user['Password'] == password:
+                        session['username'] = username
+                        session['role'] = user['Role']
+                        flash("Inicio de sesión exitoso.", "success")
+                        return redirect(url_for('index'))
+            flash("Usuario o contraseña incorrectos.", "error")
+        except Exception as e:
+            flash("Error al intentar iniciar sesión. Por favor, intenta de nuevo.", "error")
+            print(f"Error al intentar iniciar sesión: {e}")
+    return render_template('login.html')
+
+# Ruta para logout
+@app.route('/logout')
+@login_required
+def logout():
+    session.pop('username', None)
+    session.pop('role', None)
+    flash("Has cerrado sesión.", "success")
+    return redirect(url_for('login'))
 
 # Cargar datos con caché
 @lru_cache(maxsize=128)
@@ -71,16 +139,19 @@ def load_data():
 
 # Página principal
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    return render_template('index.html', role=session.get('role', ''))
 
 # Página de historial
 @app.route('/history')
+@login_required
 def history_page():
-    return render_template('history.html')
+    return render_template('history.html', role=session.get('role', ''))
 
 # API para obtener datos con paginación, ordenamiento y búsqueda
 @app.route('/api/datos', methods=['GET'])
+@login_required
 def get_data():
     tren = request.args.get('tren', '')
     equipo = request.args.get('equipo', '')
@@ -138,6 +209,7 @@ def get_data():
 
 # API para exportar a CSV
 @app.route('/api/export', methods=['GET'])
+@login_required
 def export_data():
     tren = request.args.get('tren', '')
     equipo = request.args.get('equipo', '')
@@ -178,6 +250,7 @@ def export_data():
 
 # API para exportar historial a CSV
 @app.route('/api/export-history', methods=['GET'])
+@login_required
 def export_history():
     df = pd.DataFrame(history)
     return df.to_csv(index=False), 200, {
@@ -187,6 +260,8 @@ def export_history():
 
 # API para actualizar datos
 @app.route('/api/update', methods=['POST'])
+@login_required
+@editor_required
 def update_data():
     data = request.get_json()
     row_index = int(data['row'])  # 1-based desde el frontend
@@ -210,7 +285,7 @@ def update_data():
             'Columna': column,
             'Valor Anterior': old_value,
             'Nuevo Valor': new_value,
-            'Usuario': 'Usuario Actual',
+            'Usuario': session['username'],
             'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Observaciones': 'Dato actualizado'
         }
@@ -229,6 +304,8 @@ def update_data():
 
 # API para insertar nuevo registro
 @app.route('/api/insert', methods=['POST'])
+@login_required
+@editor_required
 def insert_data():
     data = request.get_json()
     new_row = [data.get('Tren', ''), data.get('Equipo Agil', ''), data.get('Embajador', ''),
@@ -243,7 +320,7 @@ def insert_data():
             'Columna': 'Nueva Fila',
             'Valor Anterior': '',
             'Nuevo Valor': 'Fila insertada',
-            'Usuario': 'Usuario Actual',
+            'Usuario': session['username'],
             'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Observaciones': 'Fila insertada'
         }
@@ -262,6 +339,8 @@ def insert_data():
 
 # API para eliminar registro
 @app.route('/api/delete', methods=['POST'])
+@login_required
+@editor_required
 def delete_data():
     data = request.get_json()
     row_index = int(data['row'])  # 1-based desde el frontend
@@ -274,7 +353,7 @@ def delete_data():
             'Columna': 'Fila Eliminada',
             'Valor Anterior': str(row_values),
             'Nuevo Valor': '',
-            'Usuario': 'Usuario Actual',
+            'Usuario': session['username'],
             'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Observaciones': 'Fila eliminada'
         }
@@ -293,6 +372,7 @@ def delete_data():
 
 # API para obtener historial con paginación
 @app.route('/api/history', methods=['GET'])
+@login_required
 def get_history():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
@@ -309,6 +389,7 @@ def get_history():
 
 # API para recargar datos manualmente
 @app.route('/api/reload', methods=['GET'])
+@login_required
 def reload_data():
     load_data.cache_clear()
     data = load_data()

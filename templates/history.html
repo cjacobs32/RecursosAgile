@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Historial de Cambios</title>
+    <title>Historial - Personas en Agilidad</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -17,13 +17,23 @@
             padding: 10px 20px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             color: #FFFFFF;
         }
         .header h1 {
             margin: 0;
             font-size: 24px;
             font-weight: 500;
+        }
+        .header .user-info {
+            font-size: 14px;
+        }
+        .header .user-info a {
+            color: #FFFFFF;
+            text-decoration: underline;
+        }
+        .header .user-info a:hover {
+            color: #E0E0E0;
         }
         .container {
             padding: 20px;
@@ -44,6 +54,16 @@
             color: #0052A3;
             margin-bottom: 15px;
         }
+        .form-control {
+            border: 1px solid #E0E0E0;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            border-color: #00ADEF;
+            box-shadow: 0 0 5px rgba(0, 173, 239, 0.3);
+        }
         .btn-custom {
             background-color: #00ADEF;
             color: #FFFFFF;
@@ -52,6 +72,7 @@
             padding: 8px 16px;
             font-size: 14px;
             font-weight: 500;
+            margin-right: 10px;
             margin-bottom: 10px;
         }
         .btn-custom:hover {
@@ -71,12 +92,21 @@
             color: #333;
             font-weight: 500;
             border-bottom: 2px solid #00ADEF;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #F5F5F5;
         }
         tr:hover {
             background-color: #F9F9F9;
         }
         tr:nth-child(even) {
             background-color: #FAFAFA;
+        }
+        .error-message, .no-data-message {
+            color: #dc3545;
+            display: none;
+            margin-top: 10px;
         }
         #loading-spinner {
             display: none;
@@ -86,127 +116,68 @@
             transform: translate(-50%, -50%);
             z-index: 1000;
         }
-        .error-message, .no-data-message {
-            color: #dc3545;
-            display: none;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Historial de Cambios</h1>
+        <h1>Personas en Agilidad</h1>
+        {% if session.username %}
+            <div class="user-info">
+                <span>Usuario: {{ session.username }} ({{ session.role }}) | </span>
+                <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            </div>
+        {% endif %}
     </div>
     <div class="container">
         <div class="section">
-            <h3>Historial</h3>
-            <button class="btn-custom" onclick="exportToCSV()"><i class="fas fa-download"></i> Exportar a CSV</button>
-            <div id="loading-spinner">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-            </div>
+            <h3>Historial de Cambios</h3>
+            <button class="btn-custom" id="exportBtn"><i class="fas fa-download"></i> Exportar a CSV</button>
+            <a href="{{ url_for('index') }}" class="btn-custom"><i class="fas fa-arrow-left"></i> Volver a la Tabla Principal</a>
+        </div>
+
+        <div class="section">
             <table class="table" id="historyTable">
                 <thead>
                     <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
                         <th>Fila</th>
                         <th>Columna</th>
                         <th>Valor Anterior</th>
-                        <th>Nuevo Valor</th>
-                        <th>Usuario</th>
-                        <th>Fecha</th>
-                        <th>Observaciones</th>
+                        <th>Valor Nuevo</th>
                     </tr>
                 </thead>
                 <tbody id="historyBody"></tbody>
             </table>
-            <nav>
-                <ul class="pagination" id="pagination"></ul>
-            </nav>
-            <div id="no-data-message" class="no-data-message"></div>
         </div>
     </div>
 
     <script>
-    let currentPage = 1;
-    const perPage = 10;
-
-    function showLoadingSpinner() {
-        document.getElementById('loading-spinner').style.display = 'block';
-    }
-
-    function hideLoadingSpinner() {
-        document.getElementById('loading-spinner').style.display = 'none';
-    }
-
-    function fetchHistory(page = 1) {
-        currentPage = page;
-        showLoadingSpinner();
-
-        fetch(`/api/history?page=${page}&per_page=${perPage}`)
-            .then(response => response.json())
-            .then(data => {
+        function fetchHistory(){
+            fetch('/api/history').then(response => response.json()).then(data => {
                 const tbody = document.getElementById('historyBody');
                 tbody.innerHTML = '';
-                const noDataMessage = document.getElementById('no-data-message');
-                if (data.total === 0) {
-                    noDataMessage.textContent = 'No se encontraron registros en el historial';
-                    noDataMessage.style.display = 'block';
-                } else {
-                    noDataMessage.style.display = 'none';
-                    data.history.forEach(row => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${row['Fila'] || '-'}</td>
-                            <td>${row['Columna'] || '-'}</td>
-                            <td>${row['Valor Anterior'] || '-'}</td>
-                            <td>${row['Nuevo Valor'] || '-'}</td>
-                            <td>${row['Usuario'] || '-'}</td>
-                            <td>${row['Fecha'] || '-'}</td>
-                            <td>${row['Observaciones'] || '-'}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-                updatePagination(data.total);
-            })
-            .catch(err => {
-                console.error('Error fetching history:', err);
-                const noDataMessage = document.getElementById('no-data-message');
-                noDataMessage.textContent = 'Error al cargar el historial';
-                noDataMessage.style.display = 'block';
-            })
-            .finally(() => {
-                hideLoadingSpinner();
+                data.history.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${row.Fecha}</td>
+                            <td>${row.Usuario}</td>
+                            <td>${row.Observaciones || 'Dato actualizado'}</td>
+                            <td>${row.Fila}</td>
+                            <td>${row.Columna}</td>
+                            <td>${row['Valor Anterior']}</td>
+                            <td>${row['Nuevo Valor']}</td>
+                        </tr>`;
+                });
             });
-    }
-
-    function updatePagination(total) {
-        const pagination = document.getElementById('pagination');
-        pagination.innerHTML = '';
-        const totalPages = Math.ceil(total / perPage);
-
-        for (let i = 1; i <= totalPages; i++) {
-            const li = document.createElement('li');
-            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            const a = document.createElement('a');
-            a.className = 'page-link';
-            a.textContent = i;
-            a.href = '#';
-            a.addEventListener('click', (e) => {
-                e.preventDefault();
-                fetchHistory(i);
-            });
-            li.appendChild(a);
-            pagination.appendChild(li);
         }
-    }
 
-    function exportToCSV() {
-        window.location.href = '/api/export-history';
-    }
+        document.getElementById('exportBtn').onclick = function(){
+            window.location = '/api/export-history';
+        };
 
-    fetchHistory();
+        document.addEventListener('DOMContentLoaded', fetchHistory);
     </script>
 </body>
 </html>
