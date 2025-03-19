@@ -10,18 +10,29 @@ import os
 app = Flask(__name__)
 
 # Conectar con Google Sheets
+import os
+import json
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
+
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Leer las credenciales desde la variable de entorno GOOGLE_CREDENTIALS
+# Intentar leer desde la variable de entorno (para Render)
 credentials_json = os.getenv('GOOGLE_CREDENTIALS')
-if not credentials_json:
-    raise ValueError("La variable de entorno GOOGLE_CREDENTIALS no está configurada")
+if credentials_json:
+    try:
+        credentials_dict = json.loads(credentials_json)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        print("Credenciales cargadas desde la variable de entorno GOOGLE_CREDENTIALS")
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"Error al parsear GOOGLE_CREDENTIALS: {e}")
+        print("Leyendo desde credentials.json debido a error en GOOGLE_CREDENTIALS")
+        creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+else:
+    # Leer desde el archivo local (para pruebas locales)
+    print("GOOGLE_CREDENTIALS no encontrada, leyendo desde credentials.json")
+    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
 
-# Convertir la cadena JSON en un diccionario
-credentials_dict = json.loads(credentials_json)
-
-# Cargar las credenciales desde el diccionario
-creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 client = gspread.authorize(creds)
 
 try:
