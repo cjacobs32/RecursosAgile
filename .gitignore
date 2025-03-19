@@ -1,0 +1,4 @@
+echo "credentials.json" >> .gitignore
+git add .gitignore
+git commit -m "Agregando credentials.json al .gitignore"
+git push origin main

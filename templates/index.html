@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Personas en Agilidad</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #FFFFFF;
+            margin: 0;
+        }
+        .header {
+            background-color: #0052A3;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 500;
+        }
+        .container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative; /* Para posicionar el botón de recargar */
+        }
+        .reload-btn-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .section {
+            background-color: #FFFFFF;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .section h3 {
+            font-size: 18px;
+            font-weight: 500;
+            color: #0052A3;
+            margin-bottom: 15px;
+        }
+        .form-control {
+            border: 1px solid #E0E0E0;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            border-color: #00ADEF;
+            box-shadow: 0 0 5px rgba(0, 173, 239, 0.3);
+        }
+        .btn-custom {
+            background-color: #00ADEF;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn-custom:hover {
+            background-color: #008BCF;
+        }
+        .btn-reload {
+            background-color: #00ADEF;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-reload:hover {
+            background-color: #008BCF;
+        }
+        .table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        th {
+            background-color: #FFFFFF;
+            color: #333;
+            font-weight: 500;
+            border-bottom: 2px solid #00ADEF;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #F5F5F5;
+        }
+        tr:hover {
+            background-color: #F9F9F9;
+        }
+        tr:nth-child(even) {
+            background-color: #FAFAFA;
+        }
+        .action-cell {
+            text-align: center;
+        }
+        .edit-btn, .confirm-btn, .delete-btn {
+            cursor: pointer;
+            margin: 0 8px;
+            font-size: 1.2em;
+        }
+        .edit-btn {
+            color: #00ADEF;
+            display: inline-block;
+        }
+        .confirm-btn {
+            color: #28A745;
+            display: none;
+        }
+        .delete-btn {
+            color: #FF0000;
+        }
+        .editable-cell.editing {
+            border: 2px solid #00ADEF;
+            background-color: #E6F7FA;
+            border-radius: 4px;
+        }
+        .error-message, .no-data-message {
+            color: #dc3545;
+            display: none;
+            margin-top: 10px;
+        }
+        #loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #E0E0E0;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            background-color: #FFFFFF;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #FFFFFF;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        .autocomplete-items div:hover {
+            background-color: #F5F5F5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Personas en Agilidad</h1>
+    </div>
+    <div class="container">
+        <div class="reload-btn-container">
+            <button class="btn-reload" onclick="reloadData()"><i class="fas fa-sync"></i> Recargar Datos</button>
+        </div>
+        <div class="section">
+            <h3>Filtros</h3>
+            <div class="row">
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="tren" class="form-control" placeholder="Filtrar por Tren" oninput="filterSuggestions('tren', [])">
+                    <div id="tren-suggestions" class="autocomplete-items"></div>
+                </div>
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="equipo" class="form-control" placeholder="Filtrar por Equipo Agil" oninput="filterSuggestions('equipo', [])">
+                    <div id="equipo-suggestions" class="autocomplete-items"></div>
+                </div>
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="embajador" class="form-control" placeholder="Filtrar por Embajador" oninput="filterSuggestions('embajador', [])">
+                    <div id="embajador-suggestions" class="autocomplete-items"></div>
+                </div>
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="externo" class="form-control" placeholder="Filtrar por Externo/TEF" oninput="filterSuggestions('externo', [])">
+                    <div id="externo-suggestions" class="autocomplete-items"></div>
+                </div>
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="po" class="form-control" placeholder="Filtrar por PO" oninput="filterSuggestions('po', [])">
+                    <div id="po-suggestions" class="autocomplete-items"></div>
+                </div>
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="sm" class="form-control" placeholder="Filtrar por SM" oninput="filterSuggestions('sm', [])">
+                    <div id="sm-suggestions" class="autocomplete-items"></div>
+                </div>
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="facilitador" class="form-control" placeholder="Filtrar por Facilitador Disciplina" oninput="filterSuggestions('facilitador', [])">
+                    <div id="facilitador-suggestions" class="autocomplete-items"></div>
+                </div>
+                <div class="col-md-4 mb-2 position-relative">
+                    <input type="text" id="search" class="form-control" placeholder="Búsqueda global" oninput="fetchData(1)">
+                    <div id="search-suggestions" class="autocomplete-items"></div>
+                </div>
+            </div>
+            <button class="btn-custom" onclick="exportToCSV()"><i class="fas fa-download"></i> Exportar a CSV</button>
+            <button class="btn-custom" onclick="toggleHistory()"><i class="fas fa-history"></i> Ver Historial</button>
+            <button class="btn-custom" onclick="clearFilters()"><i class="fas fa-eraser"></i> Limpiar Filtros</button>
+            <button class="btn-custom" onclick="insertRow()">Insertar Fila</button>
+        </div>
+
+        <div class="section">
+            <h3>Datos</h3>
+            <div id="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+            <table class="table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('Tren')">Tren</th>
+                        <th onclick="sortTable('Equipo Agil')">Equipo Agil</th>
+                        <th onclick="sortTable('Embajador')">Embajador</th>
+                        <th onclick="sortTable('Externo/TEF')">Externo/TEF</th>
+                        <th onclick="sortTable('PO')">PO</th>
+                        <th onclick="sortTable('SM')">SM</th>
+                        <th onclick="sortTable('Facilitador Disciplina')">Facilitador Disciplina</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <nav>
+                <ul class="pagination" id="pagination"></ul>
+            </nav>
+            <div id="message" class="mt-2 text-success" style="display: none;"></div>
+            <div id="error-message" class="error-message"></div>
+            <div id="no-data-message" class="no-data-message"></div>
+        </div>
+    </div>
+
+    <script>
+    let currentPage = 1;
+    const perPage = 10;
+    let sortBy = 'Tren';
+    let sortOrder = 'asc';
+
+    function showLoadingSpinner() {
+        document.getElementById('loading-spinner').style.display = 'block';
+    }
+
+    function hideLoadingSpinner() {
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
+
+    function fetchData(page = 1) {
+        currentPage = page;
+        const tren = document.getElementById('tren').value;
+        const equipo = document.getElementById('equipo').value;
+        const embajador = document.getElementById('embajador').value;
+        const externo = document.getElementById('externo').value;
+        const po = document.getElementById('po').value;
+        const sm = document.getElementById('sm').value;
+        const facilitador = document.getElementById('facilitador').value;
+        const search = document.getElementById('search').value;
+
+        showLoadingSpinner();
+
+        fetch(`/api/datos?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}&sort_by=${sortBy}&sort_order=${sortOrder}&page=${page}&per_page=${perPage}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                const noDataMessage = document.getElementById('no-data-message');
+                if (data.total === 0) {
+                    noDataMessage.textContent = data.message || 'No se encontraron datos';
+                    noDataMessage.style.display = 'block';
+                } else {
+                    noDataMessage.style.display = 'none';
+                    data.data.forEach((row) => {
+                        const rowIndex = row.row_index;
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="editable-cell" data-row="${rowIndex}" data-column="Tren">${row['Tren'] || '-'}</td>
+                            <td class="editable-cell" data-row="${rowIndex}" data-column="Equipo Agil">${row['Equipo Agil'] || '-'}</td>
+                            <td class="editable-cell" data-row="${rowIndex}" data-column="Embajador">${row['Embajador'] || '-'}</td>
+                            <td class="editable-cell" data-row="${rowIndex}" data-column="Externo/TEF">${row['Externo/TEF'] || '-'}</td>
+                            <td class="editable-cell" data-row="${rowIndex}" data-column="PO">${row['PO'] || '-'}</td>
+                            <td class="editable-cell" data-row="${rowIndex}" data-column="SM">${row['SM'] || '-'}</td>
+                            <td class="editable-cell" data-row="${rowIndex}" data-column="Facilitador Disciplina">${row['Facilitador Disciplina'] || '-'}</td>
+                            <td class="action-cell">
+                                <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
+                                <span class="confirm-btn" onclick="confirmEditRow(this, ${rowIndex})"><i class="fas fa-check"></i></span>
+                                <span class="delete-btn" onclick="deleteRow(${rowIndex})"><i class="fas fa-times"></i></span>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+                updatePagination(data.total);
+            })
+            .catch(err => {
+                console.error('Error fetching data:', err);
+                const noDataMessage = document.getElementById('no-data-message');
+                noDataMessage.textContent = 'Error al cargar los datos';
+                noDataMessage.style.display = 'block';
+            })
+            .finally(() => {
+                hideLoadingSpinner();
+            });
+    }
+
+    function updatePagination(total) {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+        const totalPages = Math.ceil(total / perPage);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            const a = document.createElement('a');
+            a.className = 'page-link';
+            a.textContent = i;
+            a.href = '#';
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                fetchData(i);
+            });
+            li.appendChild(a);
+            pagination.appendChild(li);
+        }
+    }
+
+    function exportToCSV() {
+        const tren = document.getElementById('tren').value;
+        const equipo = document.getElementById('equipo').value;
+        const embajador = document.getElementById('embajador').value;
+        const externo = document.getElementById('externo').value;
+        const po = document.getElementById('po').value;
+        const sm = document.getElementById('sm').value;
+        const facilitador = document.getElementById('facilitador').value;
+        const search = document.getElementById('search').value;
+
+        window.location.href = `/api/export?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}`;
+    }
+
+    function clearFilters() {
+        document.querySelectorAll('input.form-control').forEach(input => {
+            input.value = '';
+            const suggestions = document.getElementById(`${input.id}-suggestions`);
+            if (suggestions) suggestions.innerHTML = '';
+        });
+        fetchData(1);
+    }
+
+    function reloadData() {
+        showLoadingSpinner();
+        fetch('/api/reload')
+            .then(response => response.json())
+            .then(data => {
+                const noDataMessage = document.getElementById('no-data-message');
+                if (data.total === 0) {
+                    noDataMessage.textContent = data.message || 'No se encontraron datos';
+                    noDataMessage.style.display = 'block';
+                } else {
+                    noDataMessage.style.display = 'none';
+                    fetchData(1);
+                }
+            })
+            .catch(err => {
+                console.error('Error reloading data:', err);
+                const noDataMessage = document.getElementById('no-data-message');
+                noDataMessage.textContent = 'Error al recargar los datos';
+                noDataMessage.style.display = 'block';
+            })
+            .finally(() => {
+                hideLoadingSpinner();
+            });
+    }
+
+    function startEditRow(button, rowIndex) {
+        const row = button.closest('tr');
+        const cells = row.querySelectorAll('.editable-cell');
+        const oldValues = {};
+
+        cells.forEach(cell => {
+            const column = cell.getAttribute('data-column');
+            oldValues[column] = cell.textContent.trim();
+            cell.classList.add('editing');
+            cell.setAttribute('contenteditable', 'true');
+        });
+
+        button.style.display = 'none';
+        row.querySelector('.confirm-btn').style.display = 'inline-block';
+        row.dataset.oldValues = JSON.stringify(oldValues);
+    }
+
+    function confirmEditRow(button, rowIndex) {
+        const row = button.closest('tr');
+        const cells = row.querySelectorAll('.editable-cell');
+        const oldValues = JSON.parse(row.dataset.oldValues || '{}');
+        const updates = [];
+        let hasChanges = false;
+
+        cells.forEach(cell => {
+            const column = cell.getAttribute('data-column');
+            const newValue = cell.textContent.trim();
+            const oldValue = oldValues[column] || '';
+
+            if (newValue !== oldValue) {
+                hasChanges = true;
+                updates.push({ row: rowIndex, column, value: newValue });
+            }
+            cell.classList.remove('editing');
+            cell.removeAttribute('contenteditable');
+        });
+
+        if (!hasChanges) {
+            button.style.display = 'none';
+            row.querySelector('.edit-btn').style.display = 'inline-block';
+            return;
+        }
+
+        if (confirm(`¿Seguro que quieres guardar los cambios en la fila ${rowIndex}?`)) {
+            Promise.all(updates.map(update => 
+                fetch('/api/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(update)
+                }).then(response => response.json())
+            ))
+            .then(results => {
+                const errors = results.filter(r => r.error);
+                if (errors.length > 0) {
+                    const errorMessage = document.getElementById('error-message');
+                    errorMessage.textContent = errors.map(e => e.error).join(', ');
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => { errorMessage.style.display = 'none'; }, 2000);
+                } else {
+                    const message = document.getElementById('message');
+                    message.textContent = 'Fila actualizada correctamente';
+                    message.style.display = 'block';
+                    setTimeout(() => { message.style.display = 'none'; }, 2000);
+                    fetchData(currentPage);
+                }
+            })
+            .catch(err => {
+                console.error('Error updating row:', err);
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.textContent = 'Error al actualizar la fila';
+                errorMessage.style.display = 'block';
+                setTimeout(() => { errorMessage.style.display = 'none'; }, 2000);
+            });
+        }
+    }
+
+    function sortTable(column) {
+        if (sortBy === column) {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortBy = column;
+            sortOrder = 'asc';
+        }
+        fetchData(1);
+    }
+
+    function toggleHistory() {
+        window.open('/history', '_blank');
+    }
+
+    function insertRow() {
+        const newRow = {
+            'Tren': prompt('Tren:') || '',
+            'Equipo Agil': prompt('Equipo Agil:') || '',
+            'Embajador': prompt('Embajador:') || '',
+            'Externo/TEF': prompt('Externo/TEF:') || '',
+            'PO': prompt('PO:') || '',
+            'SM': prompt('SM:') || '',
+            'Facilitador Disciplina': prompt('Facilitador Disciplina:') || ''
+        };
+        fetch('/api/insert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newRow)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) alert(data.error);
+            else {
+                fetchData(currentPage);
+            }
+        });
+    }
+
+    function deleteRow(rowIndex) {
+        if (confirm(`¿Seguro que quieres eliminar la fila ${rowIndex}?`)) {
+            fetch('/api/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ row: rowIndex })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    fetchData(currentPage);
+                }
+            })
+            .catch(err => {
+                console.error('Error deleting row:', err);
+                alert('Error al eliminar la fila');
+            });
+        }
+    }
+
+    function filterSuggestions(inputId, defaultSuggestions) {
+        const input = document.getElementById(inputId);
+        const suggestionsDiv = document.getElementById(`${inputId}-suggestions`);
+        suggestionsDiv.innerHTML = '';
+
+        if (!input.value) {
+            return;
+        }
+
+        showLoadingSpinner();
+        fetch('/api/datos')
+            .then(response => response.json())
+            .then(data => {
+                const allValues = data.data.flatMap(row => Object.values(row));
+                const uniqueValues = [...new Set(allValues)].filter(val => val && val.toLowerCase().includes(input.value.toLowerCase()));
+                const suggestions = defaultSuggestions.length > 0 ? defaultSuggestions.filter(s => s.toLowerCase().includes(input.value.toLowerCase())) : uniqueValues;
+
+                suggestions.forEach(suggestion => {
+                    const div = document.createElement('div');
+                    div.innerHTML = suggestion;
+                    div.addEventListener('click', () => {
+                        input.value = suggestion;
+                        suggestionsDiv.innerHTML = '';
+                        fetchData(1);
+                    });
+                    suggestionsDiv.appendChild(div);
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching suggestions:', err);
+            })
+            .finally(() => {
+                hideLoadingSpinner();
+            });
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.id !== 'search') fetchData(1);
+        });
+    });
+
+    fetchData();
+    </script>
+</body>
+</html>
