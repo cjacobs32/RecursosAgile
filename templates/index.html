@@ -7,182 +7,45 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #FFFFFF;
-            margin: 0;
-        }
-        .header {
-            background-color: #0052A3;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between; /* Cambiado para incluir el enlace de logout */
-            color: #FFFFFF;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 500;
-        }
-        .header .user-info {
-            font-size: 14px;
-        }
-        .header .user-info a {
-            color: #FFFFFF;
-            text-decoration: underline;
-        }
-        .header .user-info a:hover {
-            color: #E0E0E0;
-        }
-        .container {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            position: relative;
-        }
-        .reload-btn-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-        .section {
-            background-color: #FFFFFF;
-            border: 1px solid #E0E0E0;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .section h3 {
-            font-size: 18px;
-            font-weight: 500;
-            color: #0052A3;
-            margin-bottom: 15px;
-        }
-        .form-control {
-            border: 1px solid #E0E0E0;
-            border-radius: 4px;
-            padding: 8px;
-            font-size: 14px;
-        }
-        .form-control:focus {
-            border-color: #00ADEF;
-            box-shadow: 0 0 5px rgba(0, 173, 239, 0.3);
-        }
-        .btn-custom {
-            background-color: #00ADEF;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-        .btn-custom:hover {
-            background-color: #008BCF;
-        }
-        .btn-reload {
-            background-color: #00ADEF;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .btn-reload:hover {
-            background-color: #008BCF;
-        }
-        .table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #E0E0E0;
-        }
-        th {
-            background-color: #FFFFFF;
-            color: #333;
-            font-weight: 500;
-            border-bottom: 2px solid #00ADEF;
-            cursor: pointer;
-        }
-        th:hover {
-            background-color: #F5F5F5;
-        }
-        tr:hover {
-            background-color: #F9F9F9;
-        }
-        tr:nth-child(even) {
-            background-color: #FAFAFA;
-        }
-        .action-cell {
-            text-align: center;
-        }
-        .edit-btn, .confirm-btn, .delete-btn {
-            cursor: pointer;
-            margin: 0 8px;
-            font-size: 1.2em;
-        }
-        .edit-btn {
-            color: #00ADEF;
-            display: inline-block;
-        }
-        .confirm-btn {
-            color: #28A745;
-            display: none;
-        }
-        .delete-btn {
-            color: #FF0000;
-        }
-        .editable-cell.editing {
-            border: 2px solid #00ADEF;
-            background-color: #E6F7FA;
-            border-radius: 4px;
-        }
-        .error-message, .no-data-message {
-            color: #dc3545;
-            display: none;
-            margin-top: 10px;
-        }
-        #loading-spinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-        }
-        .autocomplete-items {
-            position: absolute;
-            border: 1px solid #E0E0E0;
-            border-bottom: none;
-            border-top: none;
-            z-index: 99;
-            background-color: #FFFFFF;
-            width: 100%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .autocomplete-items div {
-            padding: 10px;
-            cursor: pointer;
-            background-color: #FFFFFF;
-            border-bottom: 1px solid #E0E0E0;
-        }
-        .autocomplete-items div:hover {
-            background-color: #F5F5F5;
-        }
+        body { font-family: 'Roboto', sans-serif; background-color: #FFFFFF; margin: 0; }
+        .header { background-color: #0052A3; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; color: #FFFFFF; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 500; }
+        .header .user-info { font-size: 14px; }
+        .header .user-info a { color: #FFFFFF; text-decoration: underline; }
+        .header .user-info a:hover { color: #E0E0E0; }
+        .container { padding: 20px; max-width: 1200px; margin: 0 auto; position: relative; }
+        .reload-btn-container { position: absolute; top: 20px; right: 20px; }
+        .section { background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .section h3 { font-size: 18px; font-weight: 500; color: #0052A3; margin-bottom: 15px; }
+        .form-control { border: 1px solid #E0E0E0; border-radius: 4px; padding: 8px; font-size: 14px; }
+        .form-control:focus { border-color: #00ADEF; box-shadow: 0 0 5px rgba(0, 173, 239, 0.3); }
+        .btn-custom { background-color: #00ADEF; color: #FFFFFF; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: 500; margin-right: 10px; margin-bottom: 10px; transition: background-color 0.3s ease, transform 0.1s ease; }
+        .btn-custom:hover { background-color: #008BCF; transform: scale(1.05); }
+        .btn-primary { background-color: #0052A3; padding: 10px 20px; }
+        .btn-reload { background-color: #00ADEF; color: #FFFFFF; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: 500; }
+        .btn-reload:hover { background-color: #008BCF; }
+        .table { border-collapse: collapse; width: 100%; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #E0E0E0; }
+        th { background-color: #FFFFFF; color: #333; font-weight: 500; border-bottom: 2px solid #00ADEF; cursor: pointer; }
+        th:hover { background-color: #F5F5F5; }
+        tr:hover { background-color: #F9F9F9; }
+        tr:nth-child(even) { background-color: #FAFAFA; }
+        .action-cell { text-align: center; }
+        .edit-btn, .confirm-btn, .cancel-btn, .delete-btn { cursor: pointer; margin: 0 8px; font-size: 1.2em; }
+        .edit-btn { color: #00ADEF; display: inline-block; }
+        .confirm-btn { color: #28A745; display: none; }
+        .cancel-btn { color: #dc3545; display: none; }
+        .delete-btn { color: #FF0000; }
+        .editable-cell.editing { border: 2px solid #00ADEF; background-color: #E6F7FA; padding: 5px; border-radius: 4px; outline: none; }
+        .error-message, .no-data-message { color: #dc3545; display: none; margin-top: 10px; }
+        #loading-spinner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 1000; }
+        #loading-spinner .spinner-border { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .pagination-info { margin-top: 10px; font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Personas en Agilidad</h1>
-        <!-- Mostrar enlace de logout -->
         {% if session.username %}
             <div class="user-info">
                 <span>Usuario: {{ session.username }} ({{ session.role }}) | </span>
@@ -196,48 +59,26 @@
         </div>
         <div class="section">
             <h3>Filtros</h3>
-            <div class="row">
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="trenFilter" class="form-control" placeholder="Filtrar por Tren">
-                    <div id="tren-suggestions" class="autocomplete-items"></div>
-                </div>
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="equipoFilter" class="form-control" placeholder="Filtrar por Equipo Ágil">
-                    <div id="equipo-suggestions" class="autocomplete-items"></div>
-                </div>
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="embajadorFilter" class="form-control" placeholder="Filtrar por Embajador">
-                    <div id="embajador-suggestions" class="autocomplete-items"></div>
-                </div>
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="externoFilter" class="form-control" placeholder="Filtrar por Externo/TEF">
-                    <div id="externo-suggestions" class="autocomplete-items"></div>
-                </div>
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="poFilter" class="form-control" placeholder="Filtrar por PO">
-                    <div id="po-suggestions" class="autocomplete-items"></div>
-                </div>
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="smFilter" class="form-control" placeholder="Filtrar por SM">
-                    <div id="sm-suggestions" class="autocomplete-items"></div>
-                </div>
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="facilitadorFilter" class="form-control" placeholder="Filtrar por Facilitador Disciplina">
-                    <div id="facilitador-suggestions" class="autocomplete-items"></div>
-                </div>
-                <div class="col-md-4 mb-2 position-relative">
-                    <input type="text" id="globalSearch" class="form-control" placeholder="Búsqueda global">
-                    <div id="search-suggestions" class="autocomplete-items"></div>
+            <input type="text" id="globalSearch" class="form-control mb-2" placeholder="Búsqueda global">
+            <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">Filtros Avanzados</button>
+            <div class="collapse" id="advancedFilters">
+                <div class="row">
+                    <div class="col-md-4 mb-2"><input type="text" id="trenFilter" class="form-control" placeholder="Filtrar por Tren"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="equipoFilter" class="form-control" placeholder="Filtrar por Equipo Ágil"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="embajadorFilter" class="form-control" placeholder="Filtrar por Embajador"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="externoFilter" class="form-control" placeholder="Filtrar por Externo/TEF"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="poFilter" class="form-control" placeholder="Filtrar por PO"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="smFilter" class="form-control" placeholder="Filtrar por SM"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="facilitadorFilter" class="form-control" placeholder="Filtrar por Facilitador Disciplina"></div>
                 </div>
             </div>
             <button class="btn-custom" id="exportBtn"><i class="fas fa-download"></i> Exportar a CSV</button>
             <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
             <button class="btn-custom" onclick="clearFilters()"><i class="fas fa-eraser"></i> Limpiar Filtros</button>
             {% if role == 'Editor' %}
-            <button class="btn-custom" id="addRowBtn"><i class="fas fa-plus"></i> Insertar Fila</button>
+            <button class="btn-custom btn-primary" id="addRowBtn"><i class="fas fa-plus"></i> Insertar Fila</button>
             {% endif %}
         </div>
-
         <div class="section">
             <h3>Datos</h3>
             <div id="loading-spinner">
@@ -263,30 +104,23 @@
             <nav>
                 <ul class="pagination" id="pagination"></ul>
             </nav>
+            <div class="pagination-info" id="paginationInfo"></div>
             <div id="message" class="mt-2 text-success" style="display: none;"></div>
             <div id="error-message" class="error-message"></div>
             <div id="no-data-message" class="no-data-message"></div>
         </div>
     </div>
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Definir el rol del usuario como variable de JavaScript
         const userRole = "{{ role }}";
-
         let currentPage = 1;
         const perPage = 10;
         let sortBy = 'Tren';
         let sortOrder = 'asc';
 
-        function showLoadingSpinner() {
-            document.getElementById('loading-spinner').style.display = 'block';
-        }
-
-        function hideLoadingSpinner() {
-            document.getElementById('loading-spinner').style.display = 'none';
-        }
+        function showLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'block'; }
+        function hideLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'none'; }
 
         function fetchData(page = 1) {
             currentPage = page;
@@ -300,14 +134,8 @@
             const search = document.getElementById('globalSearch').value;
 
             showLoadingSpinner();
-
             fetch(`/api/datos?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}&sort_by=${sortBy}&sort_order=${sortOrder}&page=${page}&per_page=${perPage}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error en la respuesta del servidor');
-                    }
-                    return response.json();
-                })
+                .then(response => response.ok ? response.json() : Promise.reject('Error en la respuesta del servidor'))
                 .then(data => {
                     const tbody = document.getElementById('tableBody');
                     tbody.innerHTML = '';
@@ -317,7 +145,7 @@
                         noDataMessage.style.display = 'block';
                     } else {
                         noDataMessage.style.display = 'none';
-                        data.data.forEach((row) => {
+                        data.data.forEach(row => {
                             const rowIndex = row.row_index;
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
@@ -332,7 +160,8 @@
                                     ${userRole === 'Editor' ? `
                                         <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
                                         <span class="confirm-btn" onclick="confirmEditRow(this, ${rowIndex})"><i class="fas fa-check"></i></span>
-                                        <span class="delete-btn" onclick="deleteRow(${rowIndex})"><i class="fas fa-times"></i></span>
+                                        <span class="cancel-btn" onclick="cancelEditRow(this, ${rowIndex})"><i class="fas fa-times"></i></span>
+                                        <span class="delete-btn" onclick="deleteRow(${rowIndex})"><i class="fas fa-trash"></i></span>
                                     ` : ''}
                                 </td>
                             `;
@@ -343,19 +172,19 @@
                 })
                 .catch(err => {
                     console.error('Error fetching data:', err);
-                    const noDataMessage = document.getElementById('no-data-message');
-                    noDataMessage.textContent = 'Error al cargar los datos';
-                    noDataMessage.style.display = 'block';
+                    document.getElementById('no-data-message').textContent = 'Error al cargar los datos';
+                    document.getElementById('no-data-message').style.display = 'block';
                 })
-                .finally(() => {
-                    hideLoadingSpinner();
-                });
+                .finally(() => hideLoadingSpinner());
         }
 
         function updatePagination(total) {
             const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
             const totalPages = Math.ceil(total / perPage);
+            const start = (currentPage - 1) * perPage + 1;
+            const end = Math.min(currentPage * perPage, total);
+            document.getElementById('paginationInfo').textContent = `Mostrando ${start}-${end} de ${total} registros`;
 
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement('li');
@@ -364,10 +193,7 @@
                 a.className = 'page-link';
                 a.textContent = i;
                 a.href = '#';
-                a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    fetchData(i);
-                });
+                a.addEventListener('click', (e) => { e.preventDefault(); fetchData(i); });
                 li.appendChild(a);
                 pagination.appendChild(li);
             }
@@ -382,62 +208,46 @@
             const sm = document.getElementById('smFilter').value;
             const facilitador = document.getElementById('facilitadorFilter').value;
             const search = document.getElementById('globalSearch').value;
-
             window.location.href = `/api/export?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}`;
         }
 
         function clearFilters() {
-            document.querySelectorAll('input.form-control').forEach(input => {
-                input.value = '';
-                const suggestions = document.getElementById(`${input.id}-suggestions`);
-                if (suggestions) suggestions.innerHTML = '';
-            });
+            document.querySelectorAll('input.form-control').forEach(input => input.value = '');
             fetchData(1);
         }
 
-        document.getElementById('reloadBtn').addEventListener('click', function() {
+        document.getElementById('reloadBtn').addEventListener('click', () => {
             showLoadingSpinner();
-            fetch('/api/reload')
-                .then(response => response.json())
-                .then(data => {
-                    const noDataMessage = document.getElementById('no-data-message');
-                    if (data.total === 0) {
-                        noDataMessage.textContent = data.message || 'No se encontraron datos';
-                        noDataMessage.style.display = 'block';
-                    } else {
-                        noDataMessage.style.display = 'none';
-                        fetchData(1);
-                    }
-                })
-                .catch(err => {
-                    console.error('Error reloading data:', err);
-                    const noDataMessage = document.getElementById('no-data-message');
-                    noDataMessage.textContent = 'Error al recargar los datos';
+            fetch('/api/reload').then(response => response.json()).then(data => {
+                const noDataMessage = document.getElementById('no-data-message');
+                if (data.total === 0) {
+                    noDataMessage.textContent = data.message || 'No se encontraron datos';
                     noDataMessage.style.display = 'block';
-                })
-                .finally(() => {
-                    hideLoadingSpinner();
-                });
+                } else {
+                    noDataMessage.style.display = 'none';
+                    fetchData(1);
+                }
+            }).catch(err => {
+                console.error('Error reloading data:', err);
+                document.getElementById('no-data-message').textContent = 'Error al recargar los datos';
+                document.getElementById('no-data-message').style.display = 'block';
+            }).finally(() => hideLoadingSpinner());
         });
 
         function startEditRow(button, rowIndex) {
-            if (userRole !== 'Editor') {
-                alert('No tienes permisos para editar datos.');
-                return;
-            }
+            if (userRole !== 'Editor') { alert('No tienes permisos para editar datos.'); return; }
             const row = button.closest('tr');
             const cells = row.querySelectorAll('.editable-cell');
             const oldValues = {};
-
             cells.forEach(cell => {
                 const column = cell.getAttribute('data-column');
                 oldValues[column] = cell.textContent.trim();
                 cell.classList.add('editing');
                 cell.setAttribute('contenteditable', 'true');
             });
-
             button.style.display = 'none';
             row.querySelector('.confirm-btn').style.display = 'inline-block';
+            row.querySelector('.cancel-btn').style.display = 'inline-block';
             row.dataset.oldValues = JSON.stringify(oldValues);
         }
 
@@ -452,7 +262,6 @@
                 const column = cell.getAttribute('data-column');
                 const newValue = cell.textContent.trim();
                 const oldValue = oldValues[column] || '';
-
                 if (newValue !== oldValue) {
                     hasChanges = true;
                     updates.push({ row: rowIndex, column, value: newValue });
@@ -463,6 +272,7 @@
 
             if (!hasChanges) {
                 button.style.display = 'none';
+                row.querySelector('.cancel-btn').style.display = 'none';
                 row.querySelector('.edit-btn').style.display = 'inline-block';
                 return;
             }
@@ -474,62 +284,58 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(update)
                     }).then(response => response.json())
-                ))
-                .then(results => {
+                )).then(results => {
                     const errors = results.filter(r => r.error);
                     if (errors.length > 0) {
-                        const errorMessage = document.getElementById('error-message');
-                        errorMessage.textContent = errors.map(e => e.error).join(', ');
-                        errorMessage.style.display = 'block';
-                        setTimeout(() => { errorMessage.style.display = 'none'; }, 2000);
+                        document.getElementById('error-message').textContent = errors.map(e => e.error).join(', ');
+                        document.getElementById('error-message').style.display = 'block';
+                        setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
                     } else {
-                        const message = document.getElementById('message');
-                        message.textContent = 'Fila actualizada correctamente';
-                        message.style.display = 'block';
-                        setTimeout(() => { message.style.display = 'none'; }, 2000);
+                        document.getElementById('message').textContent = 'Fila actualizada correctamente';
+                        document.getElementById('message').style.display = 'block';
+                        setTimeout(() => document.getElementById('message').style.display = 'none', 2000);
                         fetchData(currentPage);
                     }
-                })
-                .catch(err => {
+                }).catch(err => {
                     console.error('Error updating row:', err);
-                    const errorMessage = document.getElementById('error-message');
-                    errorMessage.textContent = 'Error al actualizar la fila';
-                    errorMessage.style.display = 'block';
-                    setTimeout(() => { errorMessage.style.display = 'none'; }, 2000);
+                    document.getElementById('error-message').textContent = 'Error al actualizar la fila';
+                    document.getElementById('error-message').style.display = 'block';
+                    setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
                 });
             }
         }
 
+        function cancelEditRow(button, rowIndex) {
+            const row = button.closest('tr');
+            const oldValues = JSON.parse(row.dataset.oldValues);
+            row.querySelectorAll('.editable-cell').forEach(cell => {
+                const column = cell.getAttribute('data-column');
+                cell.textContent = oldValues[column];
+                cell.classList.remove('editing');
+                cell.removeAttribute('contenteditable');
+            });
+            button.style.display = 'none';
+            row.querySelector('.edit-btn').style.display = 'inline-block';
+            row.querySelector('.confirm-btn').style.display = 'none';
+        }
+
         function sortTable(column) {
-            if (sortBy === column) {
-                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortBy = column;
-                sortOrder = 'asc';
-            }
+            if (sortBy === column) sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            else { sortBy = column; sortOrder = 'asc'; }
             fetchData(1);
         }
 
         function deleteRow(rowIndex) {
-            if (userRole !== 'Editor') {
-                alert('No tienes permisos para eliminar datos.');
-                return;
-            }
+            if (userRole !== 'Editor') { alert('No tienes permisos para eliminar datos.'); return; }
             if (confirm(`¿Seguro que quieres eliminar la fila ${rowIndex}?`)) {
                 fetch('/api/delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ row: rowIndex })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                    } else {
-                        fetchData(currentPage);
-                    }
-                })
-                .catch(err => {
+                }).then(response => response.json()).then(data => {
+                    if (data.error) alert(data.error);
+                    else fetchData(currentPage);
+                }).catch(err => {
                     console.error('Error deleting row:', err);
                     alert('Error al eliminar la fila');
                 });
@@ -537,10 +343,7 @@
         }
 
         function insertRow() {
-            if (userRole !== 'Editor') {
-                alert('No tienes permisos para insertar datos.');
-                return;
-            }
+            if (userRole !== 'Editor') { alert('No tienes permisos para insertar datos.'); return; }
             const newRow = {
                 'Tren': prompt('Tren:') || '',
                 'Equipo Agil': prompt('Equipo Agil:') || '',
@@ -554,72 +357,16 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newRow)
-            })
-            .then(response => response.json())
-            .then(data => {
+            }).then(response => response.json()).then(data => {
                 if (data.error) alert(data.error);
-                else {
-                    fetchData(currentPage);
-                }
+                else fetchData(currentPage);
             });
         }
 
-        function filterSuggestions(inputId, defaultSuggestions) {
-            const input = document.getElementById(inputId);
-            const suggestionsDiv = document.getElementById(`${inputId}-suggestions`);
-            suggestionsDiv.innerHTML = '';
-
-            if (!input.value) {
-                return;
-            }
-
-            showLoadingSpinner();
-            fetch('/api/datos')
-                .then(response => response.json())
-                .then(data => {
-                    const allValues = data.data.flatMap(row => Object.values(row));
-                    const uniqueValues = [...new Set(allValues)].filter(val => val && val.toLowerCase().includes(input.value.toLowerCase()));
-                    const suggestions = defaultSuggestions.length > 0 ? defaultSuggestions.filter(s => s.toLowerCase().includes(input.value.toLowerCase())) : uniqueValues;
-
-                    suggestions.forEach(suggestion => {
-                        const div = document.createElement('div');
-                        div.innerHTML = suggestion;
-                        div.addEventListener('click', () => {
-                            input.value = suggestion;
-                            suggestionsDiv.innerHTML = '';
-                            fetchData(1);
-                        });
-                        suggestionsDiv.appendChild(div);
-                    });
-                })
-                .catch(err => {
-                    console.error('Error fetching suggestions:', err);
-                })
-                .finally(() => {
-                    hideLoadingSpinner();
-                });
-        }
-
-        // Event listeners para los filtros
-        document.querySelectorAll('input.form-control').forEach(input => {
-            input.addEventListener('input', () => {
-                if (input.id !== 'globalSearch') {
-                    filterSuggestions(input.id, []);
-                }
-                fetchData(1);
-            });
-        });
-
-        // Exportar a CSV
+        document.querySelectorAll('input.form-control').forEach(input => input.addEventListener('input', () => fetchData(1)));
         document.getElementById('exportBtn').addEventListener('click', exportToCSV);
-
-        // Insertar fila
         const addRowBtn = document.getElementById('addRowBtn');
-        if (addRowBtn) {
-            addRowBtn.addEventListener('click', insertRow);
-        }
-
-        // Inicializar la tabla
+        if (addRowBtn) addRowBtn.addEventListener('click', insertRow);
         fetchData();
     </script>
 </body>

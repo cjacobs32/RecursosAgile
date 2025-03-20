@@ -374,13 +374,25 @@ def delete_data():
 @app.route('/api/history', methods=['GET'])
 @login_required
 def get_history():
+    user_filter = request.args.get('user', '')
+    date_filter = request.args.get('date', '')
+    action_filter = request.args.get('action', '')
+
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
     start = (page - 1) * per_page
     end = start + per_page
 
-    total = len(history)
-    paginated_history = history[start:end]
+    filtered_history = history
+    if user_filter:
+        filtered_history = [row for row in filtered_history if user_filter.lower() in row['Usuario'].lower()]
+    if date_filter:
+        filtered_history = [row for row in filtered_history if date_filter in row['Fecha']]
+    if action_filter:
+        filtered_history = [row for row in filtered_history if action_filter.lower() in row['Observaciones'].lower()]
+
+    total = len(filtered_history)
+    paginated_history = filtered_history[start:end]
 
     return jsonify({
         'history': paginated_history,
