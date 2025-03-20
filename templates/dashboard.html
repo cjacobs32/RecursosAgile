@@ -44,7 +44,9 @@
         <div class="section">
             <h3>Tablero Personalizado</h3>
             <a href="{{ url_for('index') }}" class="btn-custom"><i class="fas fa-table"></i> Ver Tabla</a>
+            {% if role == 'Editor' %}
             <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
+            {% endif %}
         </div>
         <div class="section">
             <h3>Crear Gráfico Personalizado</h3>

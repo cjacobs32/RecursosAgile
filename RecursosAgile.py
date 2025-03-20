@@ -49,8 +49,6 @@ except gspread.exceptions.WorksheetNotFound as e:
     else:
         raise e
 
-history = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)
-
 def login_required(f):
     def wrap(*args, **kwargs):
         if 'username' not in session:
@@ -74,14 +72,24 @@ def editor_required(f):
 @lru_cache(maxsize=128)
 def load_data():
     try:
+        headers = sheet.row_values(1)
+        print("Encabezados de la hoja:", headers)
+
         data = sheet.get_all_records()
         all_rows = sheet.get_all_values()
         indices = list(range(2, len(all_rows) + 1))
         indexed_data = []
+
         for i, row in enumerate(data):
             row_copy = row.copy()
             row_copy['row_index'] = indices[i]
             indexed_data.append(row_copy)
+
+        if indexed_data:
+            print("Primer registro cargado:", indexed_data[0])
+        else:
+            print("No se encontraron datos en la hoja.")
+
         return indexed_data
     except Exception as e:
         print(f"Error al cargar datos: {e}")
@@ -122,10 +130,12 @@ def logout():
 @app.route('/')
 @login_required
 def index():
+    load_data.cache_clear()
     return render_template('index.html', role=session.get('role', ''))
 
 @app.route('/history')
 @login_required
+@editor_required  # Restringir acceso solo a Editores
 def history_page():
     return render_template('history.html', role=session.get('role', ''))
 
@@ -135,11 +145,11 @@ def get_data():
     tren = request.args.get('tren', '').lower()
     equipo = request.args.get('equipo', '').lower()
     embajador = request.args.get('embajador', '').lower()
-    area_pertenencia = request.args.get('area_pertenencia', '').lower()  # Cambiado de 'externo'
+    area_pertenencia = request.args.get('area_pertenencia', '').lower()
     po = request.args.get('po', '').lower()
     sm = request.args.get('sm', '').lower()
     facilitador = request.args.get('facilitador', '').lower()
-    zona_residencia = request.args.get('zona_residencia', '').lower()  # Nueva columna
+    zona_residencia = request.args.get('zona_residencia', '').lower()
     search = request.args.get('search', '').lower()
     sort_by = request.args.get('sort_by', 'Tren')
     sort_order = request.args.get('sort_order', 'asc')
@@ -153,11 +163,11 @@ def get_data():
         if (tren in str(row.get('Tren', '')).lower() and
             equipo in str(row.get('Equipo Agil', '')).lower() and
             embajador in str(row.get('Embajador', '')).lower() and
-            area_pertenencia in str(row.get('Área de pertenencia', '')).lower() and  # Cambiado
+            area_pertenencia in str(row.get('Área de pertenencia', '')).lower() and
             po in str(row.get('PO', '')).lower() and
             sm in str(row.get('SM', '')).lower() and
             facilitador in str(row.get('Facilitador Disciplina', '')).lower() and
-            zona_residencia in str(row.get('Zona de residencia', '')).lower() and  # Nueva columna
+            zona_residencia in str(row.get('Zona de residencia', '')).lower() and
             (not search or any(search in str(value).lower() for value in row.values())))
     ]
 
@@ -180,11 +190,11 @@ def export_data():
     tren = request.args.get('tren', '').lower()
     equipo = request.args.get('equipo', '').lower()
     embajador = request.args.get('embajador', '').lower()
-    area_pertenencia = request.args.get('area_pertenencia', '').lower()  # Cambiado
+    area_pertenencia = request.args.get('area_pertenencia', '').lower()
     po = request.args.get('po', '').lower()
     sm = request.args.get('sm', '').lower()
     facilitador = request.args.get('facilitador', '').lower()
-    zona_residencia = request.args.get('zona_residencia', '').lower()  # Nueva columna
+    zona_residencia = request.args.get('zona_residencia', '').lower()
     search = request.args.get('search', '').lower()
 
     data = load_data()
@@ -194,24 +204,26 @@ def export_data():
         if (tren in str(row.get('Tren', '')).lower() and
             equipo in str(row.get('Equipo Agil', '')).lower() and
             embajador in str(row.get('Embajador', '')).lower() and
-            area_pertenencia in str(row.get('Área de pertenencia', '')).lower() and  # Cambiado
+            area_pertenencia in str(row.get('Área de pertenencia', '')).lower() and
             po in str(row.get('PO', '')).lower() and
             sm in str(row.get('SM', '')).lower() and
             facilitador in str(row.get('Facilitador Disciplina', '')).lower() and
-            zona_residencia in str(row.get('Zona de residencia', '')).lower() and  # Nueva columna
+            zona_residencia in str(row.get('Zona de residencia', '')).lower() and
             (not search or any(search in str(value).lower() for value in row.values())))
     ]
 
     export_data = [{k: v for k, v in row.items() if k != 'row_index'} for row in filtered_data]
     output = StringIO()
-    writer = csv.DictWriter(output, fieldnames=export_data[0].keys() if export_data else ['Tren', 'Equipo Agil', 'Embajador', 'Área de pertenencia', 'PO', 'SM', 'Facilitador Disciplina', 'Zona de residencia'])  # Actualizado
+    writer = csv.DictWriter(output, fieldnames=export_data[0].keys() if export_data else ['Tren', 'Equipo Agil', 'Embajador', 'Área de pertenencia', 'PO', 'SM', 'Facilitador Disciplina', 'Zona de residencia'])
     writer.writeheader()
     writer.writerows(export_data)
     return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=datos_agile.csv"})
 
 @app.route('/api/export-history', methods=['GET'])
 @login_required
+@editor_required  # Restringir acceso solo a Editores
 def export_history():
+    history = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)
     output = StringIO()
     writer = csv.DictWriter(output, fieldnames=['Fila', 'Columna', 'Valor Anterior', 'Nuevo Valor', 'Usuario', 'Fecha', 'Observaciones'])
     writer.writeheader()
@@ -236,7 +248,6 @@ def update_data():
         old_value = sheet.cell(row_index, col_index).value
         sheet.update_cell(row_index, col_index, new_value)
 
-        global history
         new_entry = {
             'Fila': row_index,
             'Columna': column,
@@ -246,13 +257,9 @@ def update_data():
             'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Observaciones': 'Dato actualizado'
         }
-        history.append(new_entry)
-        history = sorted(history, key=lambda x: x['Fecha'], reverse=True)
         history_sheet.append_row([new_entry['Fila'], new_entry['Columna'], new_entry['Valor Anterior'], 
                                  new_entry['Nuevo Valor'], new_entry['Usuario'], new_entry['Fecha'], 
                                  new_entry['Observaciones']])
-        if len(history) > 100:
-            history = history[:100]
 
         load_data.cache_clear()
         return jsonify({'message': 'Dato actualizado correctamente'})
@@ -265,12 +272,11 @@ def update_data():
 def insert_data():
     data = request.get_json()
     new_row = [data.get('Tren', ''), data.get('Equipo Agil', ''), data.get('Embajador', ''),
-               data.get('Área de pertenencia', ''), data.get('PO', ''), data.get('SM', ''),  # Cambiado
-               data.get('Facilitador Disciplina', ''), data.get('Zona de residencia', '')]  # Nueva columna
+               data.get('Área de pertenencia', ''), data.get('PO', ''), data.get('SM', ''),
+               data.get('Facilitador Disciplina', ''), data.get('Zona de residencia', '')]
     try:
         sheet.append_row(new_row)
         row_index = len(sheet.get_all_values())
-        global history
         new_entry = {
             'Fila': row_index,
             'Columna': 'Nueva Fila',
@@ -280,13 +286,9 @@ def insert_data():
             'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Observaciones': 'Fila insertada'
         }
-        history.append(new_entry)
-        history = sorted(history, key=lambda x: x['Fecha'], reverse=True)
         history_sheet.append_row([new_entry['Fila'], new_entry['Columna'], new_entry['Valor Anterior'], 
                                  new_entry['Nuevo Valor'], new_entry['Usuario'], new_entry['Fecha'], 
                                  new_entry['Observaciones']])
-        if len(history) > 100:
-            history = history[:100]
 
         load_data.cache_clear()
         return jsonify({'message': 'Fila insertada correctamente'})
@@ -302,7 +304,6 @@ def delete_data():
     try:
         row_values = sheet.row_values(row_index)
         sheet.delete_rows(row_index)
-        global history
         new_entry = {
             'Fila': row_index,
             'Columna': 'Fila Eliminada',
@@ -312,13 +313,9 @@ def delete_data():
             'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Observaciones': 'Fila eliminada'
         }
-        history.append(new_entry)
-        history = sorted(history, key=lambda x: x['Fecha'], reverse=True)
         history_sheet.append_row([new_entry['Fila'], new_entry['Columna'], new_entry['Valor Anterior'], 
                                  new_entry['Nuevo Valor'], new_entry['Usuario'], new_entry['Fecha'], 
                                  new_entry['Observaciones']])
-        if len(history) > 100:
-            history = history[:100]
 
         load_data.cache_clear()
         return jsonify({'message': 'Fila eliminada correctamente'})
@@ -327,12 +324,16 @@ def delete_data():
 
 @app.route('/api/history', methods=['GET'])
 @login_required
+@editor_required  # Restringir acceso solo a Editores
 def get_history():
     user_filter = request.args.get('user', '').lower()
     date_filter = request.args.get('date', '')
     action_filter = request.args.get('action', '').lower()
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
+
+    # Cargar el historial dinámicamente desde la hoja
+    history = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)
 
     filtered_history = [
         row for row in history
@@ -357,7 +358,8 @@ def dashboard():
 @login_required
 def get_dashboard_data():
     data = load_data()
-    history_data = history[:5]
+    # Cargar el historial dinámicamente para el dashboard
+    history_data = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)[:5]
 
     teams_by_train = {}
     for row in data:
@@ -368,9 +370,9 @@ def get_dashboard_data():
         'po': sum(1 for row in data if row['PO']),
         'sm': sum(1 for row in data if row['SM']),
         'embajador': sum(1 for row in data if row['Embajador']),
-        'area_pertenencia': sum(1 for row in data if row['Área de pertenencia']),  # Cambiado
+        'area_pertenencia': sum(1 for row in data if row['Área de pertenencia']),
         'facilitador': sum(1 for row in data if row['Facilitador Disciplina']),
-        'zona_residencia': sum(1 for row in data if row['Zona de residencia'])  # Nueva columna
+        'zona_residencia': sum(1 for row in data if row['Zona de residencia'])
     }
 
     return jsonify({

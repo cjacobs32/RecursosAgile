@@ -74,7 +74,9 @@
                 </div>
             </div>
             <button class="btn-custom" id="exportBtn"><i class="fas fa-download"></i> Exportar a CSV</button>
+            {% if role == 'Editor' %}
             <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
+            {% endif %}
             <a href="{{ url_for('dashboard') }}" class="btn-custom"><i class="fas fa-chart-bar"></i> Ver Tablero</a>
             <button class="btn-custom" onclick="clearFilters()"><i class="fas fa-eraser"></i> Limpiar Filtros</button>
             {% if role == 'Editor' %}
@@ -173,6 +175,7 @@
                         noDataMessage.style.display = 'block';
                     } else {
                         noDataMessage.style.display = 'none';
+                        console.log("Datos recibidos:", data.data);
                         data.data.forEach(row => {
                             const rowIndex = row.row_index;
                             const tr = document.createElement('tr');
@@ -180,11 +183,11 @@
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Tren">${row['Tren'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Equipo Agil">${row['Equipo Agil'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Embajador">${row['Embajador'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Área de pertenencia">${row['Área de pertenencia'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Área de pertenencia">${row['Área de pertenencia'] !== undefined && row['Área de pertenencia'] !== '' ? row['Área de pertenencia'] : 'No disponible'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="PO">${row['PO'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="SM">${row['SM'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Facilitador Disciplina">${row['Facilitador Disciplina'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Zona de residencia">${row['Zona de residencia'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Zona de residencia">${row['Zona de residencia'] !== undefined && row['Zona de residencia'] !== '' ? row['Zona de residencia'] : 'No disponible'}</td>
                                 <td class="action-cell">
                                     ${userRole === 'Editor' ? `
                                         <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
