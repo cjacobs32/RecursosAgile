@@ -29,6 +29,7 @@
         td:nth-child(6) { color: #dc3545; } /* Valor Anterior */
         td:nth-child(7) { color: #28a745; } /* Nuevo Valor */
         .error-message, .no-data-message { color: #dc3545; display: none; margin-top: 10px; }
+        .pagination-info { margin-top: 10px; font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
@@ -67,14 +68,22 @@
                 </thead>
                 <tbody id="historyBody"></tbody>
             </table>
+            <nav>
+                <ul class="pagination" id="historyPagination"></ul>
+            </nav>
+            <div class="pagination-info" id="historyPaginationInfo"></div>
         </div>
     </div>
     <script>
-        function fetchHistory() {
+        let historyPage = 1;
+        const historyPerPage = 10;
+
+        function fetchHistory(page = 1) {
+            historyPage = page;
             const user = document.getElementById('userFilter').value;
             const date = document.getElementById('dateFilter').value;
             const action = document.getElementById('actionFilter').value;
-            fetch(`/api/history?user=${user}&date=${date}&action=${action}`)
+            fetch(`/api/history?user=${user}&date=${date}&action=${action}&page=${page}&per_page=${historyPerPage}`)
                 .then(response => response.json())
                 .then(data => {
                     const tbody = document.getElementById('historyBody');
@@ -91,12 +100,30 @@
                                 <td>${row['Nuevo Valor']}</td>
                             </tr>`;
                     });
+                    updateHistoryPagination(data.total);
                 });
         }
 
+        function updateHistoryPagination(total) {
+            const pagination = document.getElementById('historyPagination');
+            pagination.innerHTML = '';
+            const totalPages = Math.ceil(total / historyPerPage);
+            const start = (historyPage - 1) * historyPerPage + 1;
+            const end = Math.min(historyPage * historyPerPage, total);
+            document.getElementById('historyPaginationInfo').textContent = `Mostrando ${start}-${end} de ${total} cambios`;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === historyPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                li.onclick = (e) => { e.preventDefault(); fetchHistory(i); };
+                pagination.appendChild(li);
+            }
+        }
+
         document.getElementById('exportBtn').onclick = () => window.location = '/api/export-history';
-        document.querySelectorAll('input').forEach(input => input.addEventListener('input', fetchHistory));
-        document.addEventListener('DOMContentLoaded', fetchHistory);
+        document.querySelectorAll('input').forEach(input => input.addEventListener('input', () => fetchHistory(1)));
+        document.addEventListener('DOMContentLoaded', () => fetchHistory(1));
     </script>
 </body>
 </html>

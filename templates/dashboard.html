@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tablero - Personas en Agilidad</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Roboto', sans-serif; background-color: #FFFFFF; margin: 0; }
+        .header { background-color: #0052A3; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; color: #FFFFFF; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 500; }
+        .header .user-info { font-size: 14px; }
+        .header .user-info a { color: #FFFFFF; text-decoration: underline; }
+        .header .user-info a:hover { color: #E0E0E0; }
+        .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .section { background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .section h3 { font-size: 18px; font-weight: 500; color: #0052A3; margin-bottom: 15px; }
+        .btn-custom { background-color: #00ADEF; color: #FFFFFF; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: 500; margin-right: 10px; transition: background-color 0.3s ease, transform 0.1s ease; }
+        .btn-custom:hover { background-color: #008BCF; transform: scale(1.05); }
+        .form-control, .form-select { border: 1px solid #E0E0E0; border-radius: 4px; padding: 8px; font-size: 14px; margin-bottom: 10px; }
+        .form-control:focus, .form-select:focus { border-color: #00ADEF; box-shadow: 0 0 5px rgba(0, 173, 239, 0.3); }
+        .chart-container { position: relative; height: 400px; width: 100%; margin-top: 20px; }
+        .recent-changes { max-height: 200px; overflow-y: auto; }
+        .recent-changes table { width: 100%; border-collapse: collapse; }
+        .recent-changes th, .recent-changes td { padding: 8px; text-align: left; border-bottom: 1px solid #E0E0E0; font-size: 14px; }
+        .recent-changes th { background-color: #F5F5F5; color: #333; font-weight: 500; }
+        .recent-changes td:nth-child(4) { color: #dc3545; }
+        .recent-changes td:nth-child(5) { color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Personas en Agilidad</h1>
+        {% if session.username %}
+            <div class="user-info">
+                <span>Usuario: {{ session.username }} ({{ session.role }}) | </span>
+                <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            </div>
+        {% endif %}
+    </div>
+    <div class="container">
+        <div class="section">
+            <h3>Tablero Personalizado</h3>
+            <a href="{{ url_for('index') }}" class="btn-custom"><i class="fas fa-table"></i> Ver Tabla</a>
+            <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
+        </div>
+        <div class="section">
+            <h3>Crear Gráfico Personalizado</h3>
+            <p class="text-muted">Ejemplo: Selecciona "Tren" en X y "PO" en Y para ver cuántos equipos por tren tienen un PO asignado.</p>
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="xAxis" class="form-label">Eje X (Categorías)</label>
+                    <select id="xAxis" class="form-select">
+                        <option value="Tren">Tren</option>
+                        <option value="Equipo Agil">Equipo Ágil</option>
+                        <option value="Embajador">Embajador</option>
+                        <option value="Área de pertenencia">Área de pertenencia</option>
+                        <option value="PO">PO</option>
+                        <option value="SM">SM</option>
+                        <option value="Facilitador Disciplina">Facilitador Disciplina</option>
+                        <option value="Zona de residencia">Zona de residencia</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="yAxis" class="form-label">Eje Y (Valores/Conteo)</label>
+                    <select id="yAxis" class="form-select">
+                        <option value="count">Conteo de Filas</option>
+                        <option value="Tren">Tren</option>
+                        <option value="Equipo Agil">Equipo Ágil</option>
+                        <option value="Embajador">Embajador</option>
+                        <option value="Área de pertenencia">Área de pertenencia</option>
+                        <option value="PO">PO</option>
+                        <option value="SM">SM</option>
+                        <option value="Facilitador Disciplina">Facilitador Disciplina</option>
+                        <option value="Zona de residencia">Zona de residencia</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="chartType" class="form-label">Tipo de Gráfico</label>
+                    <select id="chartType" class="form-select">
+                        <option value="bar">Barras</option>
+                        <option value="pie">Circular</option>
+                        <option value="line">Líneas</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-custom mt-3" onclick="generateChart()">Generar Gráfico</button>
+            <button class="btn-custom mt-3" onclick="resetChart()">Limpiar Gráfico</button>
+            <div class="mt-3">
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="presetChart('Tren', 'count', 'bar')">Equipos por Tren</button>
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="presetChart('Tren', 'PO', 'pie')">POs por Tren</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="presetChart('Equipo Agil', 'SM', 'bar')">SMs por Equipo</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="customChart"></canvas>
+            </div>
+        </div>
+        <div class="section">
+            <h3>Actividad Reciente</h3>
+            <div class="recent-changes">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Valor Anterior</th>
+                            <th>Valor Nuevo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentChangesBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        let customChart;
+
+        function fetchDashboardData() {
+            fetch('/api/dashboard')
+                .then(response => response.json())
+                .then(data => {
+                    const recentChangesBody = document.getElementById('recentChangesBody');
+                    recentChangesBody.innerHTML = '';
+                    data.recent_changes.forEach(change => {
+                        recentChangesBody.innerHTML += `
+                            <tr>
+                                <td>${change.Fecha}</td>
+                                <td>${change.Usuario}</td>
+                                <td>${change.Observaciones || 'Dato actualizado'}</td>
+                                <td>${change['Valor Anterior']}</td>
+                                <td>${change['Nuevo Valor']}</td>
+                            </tr>`;
+                    });
+                });
+        }
+
+        function generateChart() {
+            const xAxis = document.getElementById('xAxis').value;
+            const yAxis = document.getElementById('yAxis').value;
+            const chartType = document.getElementById('chartType').value;
+
+            fetch(`/api/custom-chart?x_axis=${xAxis}&y_axis=${yAxis}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('customChart').getContext('2d');
+                    if (customChart) customChart.destroy();
+
+                    const labels = Object.keys(data.chart_data);
+                    const values = Object.values(data.chart_data);
+
+                    const chartData = {
+                        labels: labels,
+                        datasets: [{
+                            label: yAxis === 'count' ? `Conteo de equipos por ${xAxis}` : `Presencia de ${yAxis} por ${xAxis}`,
+                            data: values,
+                            backgroundColor: chartType === 'pie' ? ['#00ADEF', '#28a745', '#0052A3', '#dc3545', '#ffca28', '#6f42c1'] : '#00ADEF',
+                            borderColor: '#0052A3',
+                            borderWidth: 1
+                        }]
+                    };
+
+                    customChart = new Chart(ctx, {
+                        type: chartType,
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: chartType !== 'pie' ? {
+                                y: { beginAtZero: true, title: { display: true, text: yAxis === 'count' ? 'Cantidad' : 'Presencia' } },
+                                x: { title: { display: true, text: xAxis } }
+                            } : {},
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: yAxis === 'count' ? `Conteo de equipos por ${xAxis}` : `Distribución de ${yAxis} por ${xAxis}`
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(err => console.error('Error generando gráfico:', err));
+        }
+
+        function resetChart() {
+            document.getElementById('xAxis').value = 'Tren';
+            document.getElementById('yAxis').value = 'count';
+            document.getElementById('chartType').value = 'bar';
+            if (customChart) customChart.destroy();
+            const ctx = document.getElementById('customChart').getContext('2d');
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        }
+
+        function presetChart(xAxis, yAxis, chartType) {
+            document.getElementById('xAxis').value = xAxis;
+            document.getElementById('yAxis').value = yAxis;
+            document.getElementById('chartType').value = chartType;
+            generateChart();
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchDashboardData);
+    </script>
+</body>
+</html>

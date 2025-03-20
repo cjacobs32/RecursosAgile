@@ -59,21 +59,23 @@
         </div>
         <div class="section">
             <h3>Filtros</h3>
-            <input type="text" id="globalSearch" class="form-control mb-2" placeholder="Búsqueda global">
+            <input type="text" id="globalSearch" class="form-control mb-2" placeholder="Búsqueda global" data-bs-toggle="tooltip" title="Busca en todos los campos">
             <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">Filtros Avanzados</button>
             <div class="collapse" id="advancedFilters">
                 <div class="row">
-                    <div class="col-md-4 mb-2"><input type="text" id="trenFilter" class="form-control" placeholder="Filtrar por Tren"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="equipoFilter" class="form-control" placeholder="Filtrar por Equipo Ágil"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="embajadorFilter" class="form-control" placeholder="Filtrar por Embajador"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="externoFilter" class="form-control" placeholder="Filtrar por Externo/TEF"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="poFilter" class="form-control" placeholder="Filtrar por PO"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="smFilter" class="form-control" placeholder="Filtrar por SM"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="facilitadorFilter" class="form-control" placeholder="Filtrar por Facilitador Disciplina"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="trenFilter" class="form-control" placeholder="Filtrar por Tren" data-bs-toggle="tooltip" title="Escribe para filtrar equipos por tren"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="equipoFilter" class="form-control" placeholder="Filtrar por Equipo Ágil" data-bs-toggle="tooltip" title="Escribe para filtrar por equipo ágil"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="embajadorFilter" class="form-control" placeholder="Filtrar por Embajador" data-bs-toggle="tooltip" title="Escribe para filtrar por embajador"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="areaPertenenciaFilter" class="form-control" placeholder="Filtrar por Área de pertenencia" data-bs-toggle="tooltip" title="Escribe para filtrar por área de pertenencia"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="poFilter" class="form-control" placeholder="Filtrar por PO" data-bs-toggle="tooltip" title="Escribe para filtrar por PO"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="smFilter" class="form-control" placeholder="Filtrar por SM" data-bs-toggle="tooltip" title="Escribe para filtrar por SM"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="facilitadorFilter" class="form-control" placeholder="Filtrar por Facilitador Disciplina" data-bs-toggle="tooltip" title="Escribe para filtrar por facilitador"></div>
+                    <div class="col-md-4 mb-2"><input type="text" id="zonaResidenciaFilter" class="form-control" placeholder="Filtrar por Zona de residencia" data-bs-toggle="tooltip" title="Escribe para filtrar por zona de residencia"></div>
                 </div>
             </div>
             <button class="btn-custom" id="exportBtn"><i class="fas fa-download"></i> Exportar a CSV</button>
             <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
+            <a href="{{ url_for('dashboard') }}" class="btn-custom"><i class="fas fa-chart-bar"></i> Ver Tablero</a>
             <button class="btn-custom" onclick="clearFilters()"><i class="fas fa-eraser"></i> Limpiar Filtros</button>
             {% if role == 'Editor' %}
             <button class="btn-custom btn-primary" id="addRowBtn"><i class="fas fa-plus"></i> Insertar Fila</button>
@@ -92,10 +94,11 @@
                         <th data-sort="Tren">Tren</th>
                         <th data-sort="Equipo Agil">Equipo Ágil</th>
                         <th data-sort="Embajador">Embajador</th>
-                        <th data-sort="Externo/TEF">Externo/TEF</th>
+                        <th data-sort="Área de pertenencia">Área de pertenencia</th>
                         <th data-sort="PO">PO</th>
                         <th data-sort="SM">SM</th>
                         <th data-sort="Facilitador Disciplina">Facilitador Disciplina</th>
+                        <th data-sort="Zona de residencia">Zona de residencia</th>
                         <th>Acción</th>
                     </tr>
                 </thead>
@@ -108,6 +111,30 @@
             <div id="message" class="mt-2 text-success" style="display: none;"></div>
             <div id="error-message" class="error-message"></div>
             <div id="no-data-message" class="no-data-message"></div>
+        </div>
+        <div class="modal fade" id="addRowModal" tabindex="-1" aria-labelledby="addRowModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addRowModalLabel">Insertar Nueva Fila</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id="newTren" class="form-control mb-2" placeholder="Tren">
+                        <input type="text" id="newEquipo" class="form-control mb-2" placeholder="Equipo Ágil">
+                        <input type="text" id="newEmbajador" class="form-control mb-2" placeholder="Embajador">
+                        <input type="text" id="newAreaPertenencia" class="form-control mb-2" placeholder="Área de pertenencia">
+                        <input type="text" id="newPO" class="form-control mb-2" placeholder="PO">
+                        <input type="text" id="newSM" class="form-control mb-2" placeholder="SM">
+                        <input type="text" id="newFacilitador" class="form-control mb-2" placeholder="Facilitador Disciplina">
+                        <input type="text" id="newZonaResidencia" class="form-control mb-2" placeholder="Zona de residencia">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="submitNewRow()">Guardar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -127,14 +154,15 @@
             const tren = document.getElementById('trenFilter').value;
             const equipo = document.getElementById('equipoFilter').value;
             const embajador = document.getElementById('embajadorFilter').value;
-            const externo = document.getElementById('externoFilter').value;
+            const areaPertenencia = document.getElementById('areaPertenenciaFilter').value;
             const po = document.getElementById('poFilter').value;
             const sm = document.getElementById('smFilter').value;
             const facilitador = document.getElementById('facilitadorFilter').value;
+            const zonaResidencia = document.getElementById('zonaResidenciaFilter').value;
             const search = document.getElementById('globalSearch').value;
 
             showLoadingSpinner();
-            fetch(`/api/datos?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}&sort_by=${sortBy}&sort_order=${sortOrder}&page=${page}&per_page=${perPage}`)
+            fetch(`/api/datos?tren=${tren}&equipo=${equipo}&embajador=${embajador}&area_pertenencia=${areaPertenencia}&po=${po}&sm=${sm}&facilitador=${facilitador}&zona_residencia=${zonaResidencia}&search=${search}&sort_by=${sortBy}&sort_order=${sortOrder}&page=${page}&per_page=${perPage}`)
                 .then(response => response.ok ? response.json() : Promise.reject('Error en la respuesta del servidor'))
                 .then(data => {
                     const tbody = document.getElementById('tableBody');
@@ -152,10 +180,11 @@
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Tren">${row['Tren'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Equipo Agil">${row['Equipo Agil'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Embajador">${row['Embajador'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Externo/TEF">${row['Externo/TEF'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Área de pertenencia">${row['Área de pertenencia'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="PO">${row['PO'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="SM">${row['SM'] || '-'}</td>
                                 <td class="editable-cell" data-row="${rowIndex}" data-column="Facilitador Disciplina">${row['Facilitador Disciplina'] || '-'}</td>
+                                <td class="editable-cell" data-row="${rowIndex}" data-column="Zona de residencia">${row['Zona de residencia'] || '-'}</td>
                                 <td class="action-cell">
                                     ${userRole === 'Editor' ? `
                                         <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
@@ -203,12 +232,13 @@
             const tren = document.getElementById('trenFilter').value;
             const equipo = document.getElementById('equipoFilter').value;
             const embajador = document.getElementById('embajadorFilter').value;
-            const externo = document.getElementById('externoFilter').value;
+            const areaPertenencia = document.getElementById('areaPertenenciaFilter').value;
             const po = document.getElementById('poFilter').value;
             const sm = document.getElementById('smFilter').value;
             const facilitador = document.getElementById('facilitadorFilter').value;
+            const zonaResidencia = document.getElementById('zonaResidenciaFilter').value;
             const search = document.getElementById('globalSearch').value;
-            window.location.href = `/api/export?tren=${tren}&equipo=${equipo}&embajador=${embajador}&externo=${externo}&po=${po}&sm=${sm}&facilitador=${facilitador}&search=${search}`;
+            window.location.href = `/api/export?tren=${tren}&equipo=${equipo}&embajador=${embajador}&area_pertenencia=${areaPertenencia}&po=${po}&sm=${sm}&facilitador=${facilitador}&zona_residencia=${zonaResidencia}&search=${search}`;
         }
 
         function clearFilters() {
@@ -344,14 +374,19 @@
 
         function insertRow() {
             if (userRole !== 'Editor') { alert('No tienes permisos para insertar datos.'); return; }
+            new bootstrap.Modal(document.getElementById('addRowModal')).show();
+        }
+
+        function submitNewRow() {
             const newRow = {
-                'Tren': prompt('Tren:') || '',
-                'Equipo Agil': prompt('Equipo Agil:') || '',
-                'Embajador': prompt('Embajador:') || '',
-                'Externo/TEF': prompt('Externo/TEF:') || '',
-                'PO': prompt('PO:') || '',
-                'SM': prompt('SM:') || '',
-                'Facilitador Disciplina': prompt('Facilitador Disciplina:') || ''
+                'Tren': document.getElementById('newTren').value || '',
+                'Equipo Agil': document.getElementById('newEquipo').value || '',
+                'Embajador': document.getElementById('newEmbajador').value || '',
+                'Área de pertenencia': document.getElementById('newAreaPertenencia').value || '',
+                'PO': document.getElementById('newPO').value || '',
+                'SM': document.getElementById('newSM').value || '',
+                'Facilitador Disciplina': document.getElementById('newFacilitador').value || '',
+                'Zona de residencia': document.getElementById('newZonaResidencia').value || ''
             };
             fetch('/api/insert', {
                 method: 'POST',
@@ -359,7 +394,10 @@
                 body: JSON.stringify(newRow)
             }).then(response => response.json()).then(data => {
                 if (data.error) alert(data.error);
-                else fetchData(currentPage);
+                else {
+                    fetchData(currentPage);
+                    bootstrap.Modal.getInstance(document.getElementById('addRowModal')).hide();
+                }
             });
         }
 
@@ -368,6 +406,9 @@
         const addRowBtn = document.getElementById('addRowBtn');
         if (addRowBtn) addRowBtn.addEventListener('click', insertRow);
         fetchData();
+
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     </script>
 </body>
 </html>
