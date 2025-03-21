@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Iniciar Sesión - Personas en Agilidad</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='movistar-logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -10,51 +11,49 @@
         body { font-family: 'Roboto', sans-serif; background-color: #FFFFFF; margin: 0; }
         .header { background-color: #1A6BBF; padding: 10px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #FFFFFF; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 500; }
-        .subtitle { font-size: 14px; color: #E0E0E0; margin-top: 5px; }
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .section { background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-        .section h2 { font-size: 20px; font-weight: 500; color: #0052A3; margin-bottom: 20px; text-align: center; }
-        .form-control { border: 1px solid #E0E0E0; border-radius: 4px; padding: 8px; font-size: 14px; margin-bottom: 15px; }
+        .container { max-width: 400px; margin: 50px auto; padding: 20px; background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .form-label { font-weight: 500; color: #333; }
+        .form-control { border: 1px solid #E0E0E0; border-radius: 4px; padding: 8px; font-size: 14px; }
         .form-control:focus { border-color: #00ADEF; box-shadow: 0 0 5px rgba(0, 173, 239, 0.3); }
-        .btn-custom { background-color: #00ADEF; color: #FFFFFF; border: none; border-radius: 4px; padding: 10px 20px; font-size: 16px; font-weight: 500; width: 100%; box-shadow: 0 2px 4px rgba(0, 173, 239, 0.3); transition: background-color 0.3s ease, transform 0.1s ease; }
-        .btn-custom:hover { background-color: #008BCF; transform: scale(1.05); }
+        .btn-primary { background-color: #00ADEF; border: none; border-radius: 4px; padding: 10px 20px; font-size: 14px; font-weight: 500; transition: background-color 0.3s ease; }
+        .btn-primary:hover { background-color: #008BCF; }
+        .error-message { color: #dc3545; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Personas en Agilidad</h1>
-        <p class="subtitle">Gestión de recursos ágiles simplificada</p>
     </div>
     <div class="container">
-        <div class="section">
-            <h2>Iniciar Sesión</h2>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i> {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            <form method="POST" action="{{ url_for('login') }}">
-                <div class="mb-3">
-                    <label for="username" class="visually-hidden">Usuario</label>
-                    <input type="text" id="username" name="username" class="form-control" placeholder="Usuario" aria-required="true" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="visually-hidden">Contraseña</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Contraseña" aria-required="true" required>
-                </div>
-                <div class="form-check mb-3">
-                    <input type="checkbox" class="form-check-input" id="rememberMe" name="remember_me">
-                    <label class="form-check-label" for="rememberMe">Recordarme</label>
-                </div>
-                <button type="submit" class="btn-custom">Iniciar Sesión</button>
-            </form>
+        <h3 class="text-center mb-4">Iniciar Sesión</h3>
+        <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuario</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                <label class="form-check-label" for="remember">Recordarme</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+        </form>
+        <div id="error-message" class="error-message">
+            {% if error %}
+                {{ error }}
+            {% endif %}
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const errorMessage = document.getElementById('error-message');
+            if (errorMessage.textContent.trim()) {
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'923e0d96fb05baec',t:'MTc0MjU2NjQzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

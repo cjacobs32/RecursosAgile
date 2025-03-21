@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Personas en Agilidad</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='movistar-logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -41,6 +42,30 @@
         #loading-spinner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 1000; }
         #loading-spinner .spinner-border { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .pagination-info { margin-top: 10px; font-size: 14px; color: #666; }
+        /* Estilo para el modal de eliminación */
+        .modal-content { border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+        .modal-header { background-color: #f8d7da; border-bottom: none; padding: 15px 20px; }
+        .modal-title { font-size: 18px; font-weight: 500; color: #721c24; }
+        .modal-body { padding: 20px; display: flex; align-items: center; }
+        .modal-body i { font-size: 24px; margin-right: 15px; }
+        .modal-body p { margin: 0; font-size: 16px; color: #333; }
+        .modal-footer { border-top: none; padding: 10px 20px; }
+        .modal-footer .btn-secondary { background-color: #00ADEF; border-color: #00ADEF; color: #FFFFFF; font-weight: 500; border-radius: 4px; }
+        .modal-footer .btn-secondary:hover { background-color: #008BCF; border-color: #008BCF; }
+        .modal-footer .btn-danger { background-color: #dc3545; border-color: #dc3545; font-weight: 500; border-radius: 4px; }
+        .modal-footer .btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+        /* Estilo para el modal de edición */
+        .edit-modal-header { background-color: #d1ecf1; border-bottom: none; padding: 15px 20px; }
+        .edit-modal-title { font-size: 18px; font-weight: 500; color: #0c5460; }
+        .edit-modal-body i { color: #00ADEF; }
+        .edit-modal-footer .btn-primary { background-color: #00ADEF; border-color: #00ADEF; font-weight: 500; border-radius: 4px; }
+        .edit-modal-footer .btn-primary:hover { background-color: #008BCF; border-color: #008BCF; }
+        /* Estilo para el modal de inserción */
+        .modal-dialog { max-width: 700px; } /* Aumentar el ancho del modal */
+        .modal-body { padding: 20px; }
+        .modal-body .row { margin-bottom: 15px; }
+        .modal-body .col-md-6 { padding: 0 10px; }
+        .modal-body .form-control { margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -114,6 +139,7 @@
             <div id="error-message" class="error-message"></div>
             <div id="no-data-message" class="no-data-message"></div>
         </div>
+        <!-- Modal para Insertar Nueva Fila -->
         <div class="modal fade" id="addRowModal" tabindex="-1" aria-labelledby="addRowModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -122,18 +148,80 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="text" id="newTren" class="form-control mb-2" placeholder="Tren">
-                        <input type="text" id="newEquipo" class="form-control mb-2" placeholder="Equipo Ágil">
-                        <input type="text" id="newEmbajador" class="form-control mb-2" placeholder="Embajador">
-                        <input type="text" id="newAreaPertenencia" class="form-control mb-2" placeholder="Área de pertenencia">
-                        <input type="text" id="newPO" class="form-control mb-2" placeholder="PO">
-                        <input type="text" id="newSM" class="form-control mb-2" placeholder="SM">
-                        <input type="text" id="newFacilitador" class="form-control mb-2" placeholder="Facilitador Disciplina">
-                        <input type="text" id="newZonaResidencia" class="form-control mb-2" placeholder="Zona de residencia">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" id="newTren" class="form-control" placeholder="Tren">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" id="newEquipo" class="form-control" placeholder="Equipo Ágil">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" id="newEmbajador" class="form-control" placeholder="Embajador">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" id="newAreaPertenencia" class="form-control" placeholder="Área de pertenencia">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" id="newPO" class="form-control" placeholder="PO">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" id="newSM" class="form-control" placeholder="SM">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" id="newFacilitador" class="form-control" placeholder="Facilitador Disciplina">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" id="newZonaResidencia" class="form-control" placeholder="Zona de residencia">
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary" onclick="submitNewRow()">Guardar</button>
+                        <button type="button" class="btn btn-primary" id="submitNewRowBtn" onclick="submitNewRow()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal para Confirmar Eliminación -->
+        <div class="modal fade" id="deleteRowModal" tabindex="-1" aria-labelledby="deleteRowModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteRowModalLabel">Confirmar Eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p id="deleteRowMessage"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal para Confirmar Edición -->
+        <div class="modal fade" id="editRowModal" tabindex="-1" aria-labelledby="editRowModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header edit-modal-header">
+                        <h5 class="modal-title edit-modal-title" id="editRowModalLabel">Confirmar Edición</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body edit-modal-body">
+                        <i class="fas fa-edit"></i>
+                        <p id="editRowMessage"></p>
+                    </div>
+                    <div class="modal-footer edit-modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmEditBtn">Guardar Cambios</button>
                     </div>
                 </div>
             </div>
@@ -147,6 +235,10 @@
         const perPage = 10;
         let sortBy = 'Tren';
         let sortOrder = 'asc';
+        let rowToDelete = null;
+        let rowToEdit = null;
+        let updatesToConfirm = null;
+        let editButton = null;
 
         function showLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'block'; }
         function hideLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'none'; }
@@ -193,10 +285,12 @@
                                         <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
                                         <span class="confirm-btn" onclick="confirmEditRow(this, ${rowIndex})"><i class="fas fa-check"></i></span>
                                         <span class="cancel-btn" onclick="cancelEditRow(this, ${rowIndex})"><i class="fas fa-times"></i></span>
-                                        <span class="delete-btn" onclick="deleteRow(${rowIndex})"><i class="fas fa-trash"></i></span>
+                                        <span class="delete-btn" onclick="showDeleteModal(this, ${rowIndex})"><i class="fas fa-trash"></i></span>
                                     ` : ''}
                                 </td>
                             `;
+                            tr.dataset.tren = row['Tren'] || 'Sin Tren';
+                            tr.dataset.equipo = row['Equipo Agil'] || 'Sin Equipo';
                             tbody.appendChild(tr);
                         });
                     }
@@ -251,20 +345,24 @@
 
         document.getElementById('reloadBtn').addEventListener('click', () => {
             showLoadingSpinner();
-            fetch('/api/reload').then(response => response.json()).then(data => {
-                const noDataMessage = document.getElementById('no-data-message');
-                if (data.total === 0) {
-                    noDataMessage.textContent = data.message || 'No se encontraron datos';
-                    noDataMessage.style.display = 'block';
-                } else {
-                    noDataMessage.style.display = 'none';
-                    fetchData(1);
-                }
-            }).catch(err => {
-                console.error('Error reloading data:', err);
-                document.getElementById('no-data-message').textContent = 'Error al recargar los datos';
-                document.getElementById('no-data-message').style.display = 'block';
-            }).finally(() => hideLoadingSpinner());
+            fetch('/api/reload')
+                .then(response => response.json())
+                .then(data => {
+                    const noDataMessage = document.getElementById('no-data-message');
+                    if (data.total === 0) {
+                        noDataMessage.textContent = data.message || 'No se encontraron datos';
+                        noDataMessage.style.display = 'block';
+                    } else {
+                        noDataMessage.style.display = 'none';
+                        fetchData(1);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error reloading data:', err);
+                    document.getElementById('no-data-message').textContent = 'Error al recargar los datos';
+                    document.getElementById('no-data-message').style.display = 'block';
+                })
+                .finally(() => hideLoadingSpinner());
         });
 
         function startEditRow(button, rowIndex) {
@@ -277,6 +375,12 @@
                 oldValues[column] = cell.textContent.trim();
                 cell.classList.add('editing');
                 cell.setAttribute('contenteditable', 'true');
+                cell.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        confirmEditRow(button, rowIndex);
+                    }
+                });
             });
             button.style.display = 'none';
             row.querySelector('.confirm-btn').style.display = 'inline-block';
@@ -285,6 +389,8 @@
         }
 
         function confirmEditRow(button, rowIndex) {
+            editButton = button;
+            rowToEdit = rowIndex;
             const row = button.closest('tr');
             const cells = row.querySelectorAll('.editable-cell');
             const oldValues = JSON.parse(row.dataset.oldValues || '{}');
@@ -310,32 +416,73 @@
                 return;
             }
 
-            if (confirm(`¿Seguro que quieres guardar los cambios en la fila ${rowIndex}?`)) {
-                Promise.all(updates.map(update => 
-                    fetch('/api/update', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(update)
-                    }).then(response => response.json())
-                )).then(results => {
-                    const errors = results.filter(r => r.error);
-                    if (errors.length > 0) {
-                        document.getElementById('error-message').textContent = errors.map(e => e.error).join(', ');
-                        document.getElementById('error-message').style.display = 'block';
-                        setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
-                    } else {
-                        document.getElementById('message').textContent = 'Fila actualizada correctamente';
-                        document.getElementById('message').style.display = 'block';
-                        setTimeout(() => document.getElementById('message').style.display = 'none', 2000);
-                        fetchData(currentPage);
-                    }
-                }).catch(err => {
-                    console.error('Error updating row:', err);
-                    document.getElementById('error-message').textContent = 'Error al actualizar la fila';
+            updatesToConfirm = updates;
+            const equipo = row.dataset.equipo;
+            const changes = updates.map(update => `${update.column}: "${update.value}"`).join(', ');
+            const message = `Estás a punto de modificar el equipo "${equipo}". Los cambios son: ${changes}. ¿Deseas continuar?`;
+            document.getElementById('editRowMessage').textContent = message;
+            const modal = new bootstrap.Modal(document.getElementById('editRowModal'));
+            modal.show();
+
+            // Establecer foco en el botón "Guardar Cambios" y agregar evento para Enter
+            const confirmEditBtn = document.getElementById('confirmEditBtn');
+            confirmEditBtn.focus();
+            const editModal = document.getElementById('editRowModal');
+            editModal.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveEditRow();
+                }
+            });
+        }
+
+        function saveEditRow() {
+            if (!updatesToConfirm || !rowToEdit) return;
+
+            // Mostrar el spinner al inicio de la operación
+            showLoadingSpinner();
+
+            Promise.all(updatesToConfirm.map(update => 
+                fetch('/api/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(update)
+                }).then(response => response.json())
+            ))
+            .then(results => {
+                const errors = results.filter(r => r.error);
+                if (errors.length > 0) {
+                    document.getElementById('error-message').textContent = errors.map(e => e.error).join(', ');
                     document.getElementById('error-message').style.display = 'block';
                     setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
-                });
-            }
+                } else {
+                    document.getElementById('message').textContent = 'Fila actualizada correctamente';
+                    document.getElementById('message').style.display = 'block';
+                    setTimeout(() => document.getElementById('message').style.display = 'none', 2000);
+                    fetchData(currentPage);
+                }
+                editButton.style.display = 'none';
+                editButton.closest('tr').querySelector('.cancel-btn').style.display = 'none';
+                editButton.closest('tr').querySelector('.edit-btn').style.display = 'inline-block';
+                bootstrap.Modal.getInstance(document.getElementById('editRowModal')).hide();
+                rowToEdit = null;
+                updatesToConfirm = null;
+                editButton = null;
+            })
+            .catch(err => {
+                console.error('Error updating row:', err);
+                document.getElementById('error-message').textContent = 'Error al actualizar la fila';
+                document.getElementById('error-message').style.display = 'block';
+                setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
+                bootstrap.Modal.getInstance(document.getElementById('editRowModal')).hide();
+                rowToEdit = null;
+                updatesToConfirm = null;
+                editButton = null;
+            })
+            .finally(() => {
+                // Asegurarse de que el spinner se oculte siempre
+                hideLoadingSpinner();
+            });
         }
 
         function cancelEditRow(button, rowIndex) {
@@ -358,26 +505,84 @@
             fetchData(1);
         }
 
-        function deleteRow(rowIndex) {
+        function showDeleteModal(button, rowIndex) {
             if (userRole !== 'Editor') { alert('No tienes permisos para eliminar datos.'); return; }
-            if (confirm(`¿Seguro que quieres eliminar la fila ${rowIndex}?`)) {
-                fetch('/api/delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ row: rowIndex })
-                }).then(response => response.json()).then(data => {
-                    if (data.error) alert(data.error);
-                    else fetchData(currentPage);
-                }).catch(err => {
-                    console.error('Error deleting row:', err);
-                    alert('Error al eliminar la fila');
-                });
-            }
+            rowToDelete = rowIndex;
+            const row = button.closest('tr');
+            const tren = row.dataset.tren;
+            const equipo = row.dataset.equipo;
+            const message = `Estás a punto de eliminar el equipo "${equipo}" del tren "${tren}". Esta acción no se puede deshacer. ¿Deseas continuar?`;
+            document.getElementById('deleteRowMessage').textContent = message;
+            const modal = new bootstrap.Modal(document.getElementById('deleteRowModal'));
+            modal.show();
+
+            // Establecer foco en el botón "Eliminar" y agregar evento para Enter
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            confirmDeleteBtn.focus();
+            const deleteModal = document.getElementById('deleteRowModal');
+            deleteModal.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    deleteRow();
+                }
+            });
+        }
+
+        function deleteRow() {
+            if (!rowToDelete) return;
+
+            // Mostrar el spinner al inicio de la operación
+            showLoadingSpinner();
+
+            fetch('/api/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ row: rowToDelete })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('error-message').textContent = data.error;
+                    document.getElementById('error-message').style.display = 'block';
+                    setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
+                } else {
+                    document.getElementById('message').textContent = 'Fila eliminada correctamente';
+                    document.getElementById('message').style.display = 'block';
+                    setTimeout(() => document.getElementById('message').style.display = 'none', 2000);
+                    fetchData(currentPage);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('deleteRowModal')).hide();
+                rowToDelete = null;
+            })
+            .catch(err => {
+                console.error('Error deleting row:', err);
+                document.getElementById('error-message').textContent = 'Error al eliminar la fila';
+                document.getElementById('error-message').style.display = 'block';
+                setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
+                bootstrap.Modal.getInstance(document.getElementById('deleteRowModal')).hide();
+                rowToDelete = null;
+            })
+            .finally(() => {
+                // Asegurarse de que el spinner se oculte siempre
+                hideLoadingSpinner();
+            });
         }
 
         function insertRow() {
             if (userRole !== 'Editor') { alert('No tienes permisos para insertar datos.'); return; }
-            new bootstrap.Modal(document.getElementById('addRowModal')).show();
+            const modal = new bootstrap.Modal(document.getElementById('addRowModal'));
+            modal.show();
+
+            // Establecer foco en el primer campo y agregar evento para Enter
+            const firstInput = document.getElementById('newTren');
+            firstInput.focus();
+            const addRowModal = document.getElementById('addRowModal');
+            addRowModal.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitNewRow();
+                }
+            });
         }
 
         function submitNewRow() {
@@ -395,7 +600,9 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newRow)
-            }).then(response => response.json()).then(data => {
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (data.error) alert(data.error);
                 else {
                     fetchData(currentPage);
@@ -404,6 +611,8 @@
             });
         }
 
+        document.getElementById('confirmDeleteBtn').addEventListener('click', deleteRow);
+        document.getElementById('confirmEditBtn').addEventListener('click', saveEditRow);
         document.querySelectorAll('input.form-control').forEach(input => input.addEventListener('input', () => fetchData(1)));
         document.getElementById('exportBtn').addEventListener('click', exportToCSV);
         const addRowBtn = document.getElementById('addRowBtn');
@@ -413,5 +622,5 @@
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'923e0d9708f253b1',t:'MTc0MjU2NjQzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
