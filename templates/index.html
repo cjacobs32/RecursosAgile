@@ -42,6 +42,9 @@
         #loading-spinner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 1000; }
         #loading-spinner .spinner-border { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .pagination-info { margin-top: 10px; font-size: 14px; color: #666; }
+        .filter-message { background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .filter-message p { margin: 0; color: #0c5460; font-size: 14px; }
+        .filter-message .btn-custom { margin: 0; }
         /* Estilo para el modal de eliminación */
         .modal-content { border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
         .modal-header { background-color: #f8d7da; border-bottom: none; padding: 15px 20px; }
@@ -133,6 +136,10 @@
         </div>
         <div class="section">
             <h3>Filtros</h3>
+            <div id="filterMessage" class="filter-message" style="display: none;">
+                <p></p>
+                <button class="btn-custom" id="returnToChartBtn"><i class="fas fa-chart-bar"></i> Volver al Gráfico</button>
+            </div>
             <input type="text" id="globalSearch" class="form-control mb-2" placeholder="Búsqueda global" data-bs-toggle="tooltip" title="Busca en todos los campos">
             <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">Filtros Avanzados</button>
             <div class="collapse" id="advancedFilters">
@@ -301,6 +308,67 @@
         let updatesToConfirm = null;
         let editButton = null;
 
+        // Función para obtener parámetros de la URL
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                tren: params.get('tren') || '',
+                equipo_agil: params.get('equipo_agil') || '',
+                embajador: params.get('embajador') || '',
+                area_pertenencia: params.get('area_pertenencia') || '',
+                po: params.get('po') || '',
+                sm: params.get('sm') || '',
+                facilitador_disciplina: params.get('facilitador_disciplina') || '',
+                zona_residencia: params.get('zona_residencia') || '',
+                search: params.get('search') || '',
+                returnToDashboard: params.get('returnToDashboard') === 'true',
+                xAxis: params.get('xAxis') || '',
+                yAxis: params.get('yAxis') || '',
+                chartType: params.get('chartType') || ''
+            };
+        }
+
+        // Aplicar filtros desde la URL al cargar la página
+        function applyFiltersFromURL() {
+            const params = getQueryParams();
+            document.getElementById('trenFilter').value = params.tren;
+            document.getElementById('equipoFilter').value = params.equipo_agil;
+            document.getElementById('embajadorFilter').value = params.embajador;
+            document.getElementById('areaPertenenciaFilter').value = params.area_pertenencia;
+            document.getElementById('poFilter').value = params.po;
+            document.getElementById('smFilter').value = params.sm;
+            document.getElementById('facilitadorFilter').value = params.facilitador_disciplina;
+            document.getElementById('zonaResidenciaFilter').value = params.zona_residencia;
+            document.getElementById('globalSearch').value = params.search;
+
+            // Mostrar mensaje de filtro aplicado y botón para volver al gráfico
+            if (params.returnToDashboard) {
+                const filterMessage = document.getElementById('filterMessage');
+                const filterMessageText = document.querySelector('#filterMessage p');
+                let appliedFilter = '';
+                if (params.tren) appliedFilter = `Tren: ${params.tren}`;
+                else if (params.equipo_agil) appliedFilter = `Equipo Ágil: ${params.equipo_agil}`;
+                else if (params.embajador) appliedFilter = `Embajador: ${params.embajador}`;
+                else if (params.area_pertenencia) appliedFilter = `Área de pertenencia: ${params.area_pertenencia}`;
+                else if (params.po) appliedFilter = `PO: ${params.po}`;
+                else if (params.sm) appliedFilter = `SM: ${params.sm}`;
+                else if (params.facilitador_disciplina) appliedFilter = `Facilitador Disciplina: ${params.facilitador_disciplina}`;
+                else if (params.zona_residencia) appliedFilter = `Zona de residencia: ${params.zona_residencia}`;
+
+                if (appliedFilter) {
+                    filterMessageText.textContent = `Mostrando datos filtrados por ${appliedFilter}`;
+                    filterMessage.style.display = 'flex';
+
+                    // Configurar el botón para volver al gráfico
+                    const returnToChartBtn = document.getElementById('returnToChartBtn');
+                    returnToChartBtn.addEventListener('click', () => {
+                        const returnURL = `/dashboard?xAxis=${encodeURIComponent(params.xAxis)}&yAxis=${encodeURIComponent(params.yAxis)}&chartType=${encodeURIComponent(params.chartType)}`;
+                        window.location.href = returnURL;
+                    });
+                }
+            }
+        }
+
         function showLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'block'; }
         function hideLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'none'; }
 
@@ -401,6 +469,7 @@
 
         function clearFilters() {
             document.querySelectorAll('input.form-control').forEach(input => input.value = '');
+            document.getElementById('filterMessage').style.display = 'none';
             fetchData(1);
         }
 
@@ -678,7 +747,12 @@
         document.getElementById('exportBtn').addEventListener('click', exportToCSV);
         const addRowBtn = document.getElementById('addRowBtn');
         if (addRowBtn) addRowBtn.addEventListener('click', insertRow);
-        fetchData();
+
+        // Aplicar filtros desde la URL al cargar la página y luego cargar los datos
+        document.addEventListener('DOMContentLoaded', () => {
+            applyFiltersFromURL();
+            fetchData();
+        });
 
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));

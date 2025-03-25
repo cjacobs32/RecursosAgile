@@ -94,6 +94,7 @@
                 <button class="btn btn-outline-primary btn-sm me-2" onclick="presetChart('Tren', 'count', 'bar')">Equipos por Tren</button>
                 <button class="btn btn-outline-primary btn-sm me-2" onclick="presetChart('Equipo Agil', 'Embajador', 'bar')">Equipo Ágil por Embajador</button>
                 <button class="btn btn-outline-primary btn-sm me-2" onclick="presetChart('Área de pertenencia', 'Embajador', 'bar')">Área de Pertenencia por Embajador</button>
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="presetChart('Tren', 'Embajador', 'bar')">Distribución de Embajador por Tren</button>
             </div>
             <div class="chart-container">
                 <canvas id="customChart"></canvas>
@@ -179,6 +180,20 @@
                                     display: true,
                                     text: yAxis === 'count' ? `Conteo de equipos por ${xAxis}` : `Distribución de ${yAxis} por ${xAxis}`
                                 }
+                            },
+                            onClick: (event, elements) => {
+                                if (elements.length > 0) {
+                                    const elementIndex = elements[0].index;
+                                    const label = labels[elementIndex]; // Valor del eje X (por ejemplo, "APIs")
+                                    const filterKey = xAxis.toLowerCase().replace(' ', '_'); // Convertir "Tren" a "tren", "Equipo Agil" a "equipo_agil", etc.
+                                    // Redirigir a la página principal con el filtro y parámetros del gráfico
+                                    const returnParams = `xAxis=${encodeURIComponent(xAxis)}&yAxis=${encodeURIComponent(yAxis)}&chartType=${encodeURIComponent(chartType)}`;
+                                    window.location.href = `/?${filterKey}=${encodeURIComponent(label)}&returnToDashboard=true&${returnParams}`;
+                                }
+                            },
+                            onHover: (event, elements) => {
+                                // Cambiar el cursor a "pointer" cuando hay elementos debajo del puntero
+                                event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
                             }
                         }
                     });
