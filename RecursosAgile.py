@@ -214,21 +214,38 @@ def export_data():
 
     export_data = [{k: v for k, v in row.items() if k != 'row_index'} for row in filtered_data]
     output = StringIO()
+    # Usar UTF-8 y añadir BOM para que Excel lo lea correctamente
     writer = csv.DictWriter(output, fieldnames=export_data[0].keys() if export_data else ['Tren', 'Equipo Agil', 'Embajador', 'Área de pertenencia', 'PO', 'SM', 'Facilitador Disciplina', 'Zona de residencia'])
     writer.writeheader()
     writer.writerows(export_data)
-    return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=datos_agile.csv"})
+    # Convertir el contenido a bytes con UTF-8 y añadir BOM
+    csv_content = output.getvalue()
+    bom = '\ufeff'  # BOM para UTF-8
+    return Response(
+        bom + csv_content,
+        mimetype='text/csv; charset=utf-8',
+        headers={"Content-Disposition": "attachment;filename=datos_agile.csv"}
+    )
 
 @app.route('/api/export-history', methods=['GET'])
 @login_required
-@editor_required  # Restringir acceso solo a Editores
+@editor_required
 def export_history():
+    # Usar history_sheet (de Google Sheets) en lugar de Historial
     history = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)
     output = StringIO()
+    # Usar UTF-8 y añadir BOM para que Excel lo lea correctamente
     writer = csv.DictWriter(output, fieldnames=['Fila', 'Columna', 'Valor Anterior', 'Nuevo Valor', 'Usuario', 'Fecha', 'Observaciones'])
     writer.writeheader()
     writer.writerows(history)
-    return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=historial.csv"})
+    # Convertir el contenido a bytes con UTF-8 y añadir BOM
+    csv_content = output.getvalue()
+    bom = '\ufeff'  # BOM para UTF-8
+    return Response(
+        bom + csv_content,
+        mimetype='text/csv; charset=utf-8',
+        headers={"Content-Disposition": "attachment;filename=historial.csv"}
+    )
 
 @app.route('/api/update', methods=['POST'])
 @login_required

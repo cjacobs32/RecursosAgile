@@ -62,10 +62,59 @@
         .edit-modal-footer .btn-primary:hover { background-color: #008BCF; border-color: #008BCF; }
         /* Estilo para el modal de inserción */
         .modal-dialog { max-width: 700px; } /* Aumentar el ancho del modal */
-        .modal-body { padding: 20px; }
-        .modal-body .row { margin-bottom: 15px; }
-        .modal-body .col-md-6 { padding: 0 10px; }
-        .modal-body .form-control { margin-bottom: 10px; }
+        .insert-modal-header {
+            background-color: #d1ecf1;
+            border-bottom: none;
+            padding: 15px 20px;
+        }
+        .insert-modal-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #0c5460;
+        }
+        .insert-modal-title i {
+            color: #00ADEF;
+        }
+        .insert-modal-body {
+            padding: 20px;
+        }
+        .insert-modal-body .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .insert-modal-body .form-control {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #E0E0E0;
+        }
+        .insert-modal-body .form-control:focus {
+            border-color: #00ADEF;
+            box-shadow: 0 0 5px rgba(0, 173, 239, 0.3);
+        }
+        .insert-modal-footer .btn-primary {
+            background-color: #00ADEF;
+            border-color: #00ADEF;
+            font-weight: 500;
+            border-radius: 4px;
+        }
+        .insert-modal-footer .btn-primary:hover {
+            background-color: #008BCF;
+            border-color: #008BCF;
+        }
+        .insert-modal-footer .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            font-weight: 500;
+            border-radius: 4px;
+        }
+        .insert-modal-footer .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
     </style>
 </head>
 <body>
@@ -143,45 +192,57 @@
         <div class="modal fade" id="addRowModal" tabindex="-1" aria-labelledby="addRowModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addRowModalLabel">Insertar Nueva Fila</h5>
+                    <div class="modal-header insert-modal-header">
+                        <h5 class="modal-title insert-modal-title" id="addRowModalLabel">
+                            <i class="fas fa-plus me-2"></i> Insertar Nueva Fila
+                        </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <input type="text" id="newTren" class="form-control" placeholder="Tren">
+                        <form id="addRowForm">
+                            <div class="row mb-3">
+                                <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                    <label for="newTren" class="form-label">Tren</label>
+                                    <input type="text" id="newTren" class="form-control" placeholder="Ingresa el tren">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="newEquipo" class="form-label">Equipo Ágil</label>
+                                    <input type="text" id="newEquipo" class="form-control" placeholder="Ingresa el equipo ágil">
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <input type="text" id="newEquipo" class="form-control" placeholder="Equipo Ágil">
+                            <div class="row mb-3">
+                                <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                    <label for="newEmbajador" class="form-label">Embajador</label>
+                                    <input type="text" id="newEmbajador" class="form-control" placeholder="Ingresa el embajador">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="newAreaPertenencia" class="form-label">Área de pertenencia</label>
+                                    <input type="text" id="newAreaPertenencia" class="form-control" placeholder="Ingresa el área de pertenencia">
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <input type="text" id="newEmbajador" class="form-control" placeholder="Embajador">
+                            <div class="row mb-3">
+                                <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                    <label for="newPO" class="form-label">PO</label>
+                                    <input type="text" id="newPO" class="form-control" placeholder="Ingresa el PO">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="newSM" class="form-label">SM</label>
+                                    <input type="text" id="newSM" class="form-control" placeholder="Ingresa el SM">
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <input type="text" id="newAreaPertenencia" class="form-control" placeholder="Área de pertenencia">
+                            <div class="row mb-3">
+                                <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                    <label for="newFacilitador" class="form-label">Facilitador Disciplina</label>
+                                    <input type="text" id="newFacilitador" class="form-control" placeholder="Ingresa el facilitador">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="newZonaResidencia" class="form-label">Zona de residencia</label>
+                                    <input type="text" id="newZonaResidencia" class="form-control" placeholder="Ingresa la zona de residencia">
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <input type="text" id="newPO" class="form-control" placeholder="PO">
-                            </div>
-                            <div class="col-md-6">
-                                <input type="text" id="newSM" class="form-control" placeholder="SM">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <input type="text" id="newFacilitador" class="form-control" placeholder="Facilitador Disciplina">
-                            </div>
-                            <div class="col-md-6">
-                                <input type="text" id="newZonaResidencia" class="form-control" placeholder="Zona de residencia">
-                            </div>
-                        </div>
+                        </form>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer insert-modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-primary" id="submitNewRowBtn" onclick="submitNewRow()">Guardar</button>
                     </div>
@@ -622,5 +683,6 @@
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'923e0d9708f253b1',t:'MTc0MjU2NjQzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'923e0d9708f253b1',t:'MTc0MjU2NjQzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
 </html>
