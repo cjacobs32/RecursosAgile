@@ -1,126 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Configuración básica -->
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personas en Agilidad</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='movistar-logo.ico') }}">
+
+    <!-- Estilos externos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Roboto', sans-serif; background-color: #FFFFFF; margin: 0; }
-        .header { background-color: #0052A3; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; color: #FFFFFF; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 500; }
-        .header .user-info { font-size: 14px; }
-        .header .user-info a { color: #FFFFFF; text-decoration: underline; }
-        .header .user-info a:hover { color: #E0E0E0; }
-        .container { padding: 20px; max-width: 1200px; margin: 0 auto; position: relative; }
-        .reload-btn-container { position: absolute; top: 20px; right: 20px; }
-        .section { background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-        .section h3 { font-size: 18px; font-weight: 500; color: #0052A3; margin-bottom: 15px; }
-        .form-control { border: 1px solid #E0E0E0; border-radius: 4px; padding: 8px; font-size: 14px; }
-        .form-control:focus { border-color: #00ADEF; box-shadow: 0 0 5px rgba(0, 173, 239, 0.3); }
-        .btn-custom { background-color: #00ADEF; color: #FFFFFF; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: 500; margin-right: 10px; margin-bottom: 10px; transition: background-color 0.3s ease, transform 0.1s ease; }
-        .btn-custom:hover { background-color: #008BCF; transform: scale(1.05); }
-        .btn-primary { background-color: #0052A3; padding: 10px 20px; }
-        .btn-reload { background-color: #00ADEF; color: #FFFFFF; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: 500; }
-        .btn-reload:hover { background-color: #008BCF; }
-        .table { border-collapse: collapse; width: 100%; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #E0E0E0; }
-        th { background-color: #FFFFFF; color: #333; font-weight: 500; border-bottom: 2px solid #00ADEF; cursor: pointer; }
-        th:hover { background-color: #F5F5F5; }
-        tr:hover { background-color: #F9F9F9; }
-        tr:nth-child(even) { background-color: #FAFAFA; }
-        .action-cell { text-align: center; }
-        .edit-btn, .confirm-btn, .cancel-btn, .delete-btn { cursor: pointer; margin: 0 8px; font-size: 1.2em; }
-        .edit-btn { color: #00ADEF; display: inline-block; }
-        .confirm-btn { color: #28A745; display: none; }
-        .cancel-btn { color: #dc3545; display: none; }
-        .delete-btn { color: #FF0000; }
-        .editable-cell.editing { border: 2px solid #00ADEF; background-color: #E6F7FA; padding: 5px; border-radius: 4px; outline: none; }
-        .error-message, .no-data-message { color: #dc3545; display: none; margin-top: 10px; }
-        #loading-spinner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 1000; }
-        #loading-spinner .spinner-border { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .pagination-info { margin-top: 10px; font-size: 14px; color: #666; }
-        .filter-message { background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
-        .filter-message p { margin: 0; color: #0c5460; font-size: 14px; }
-        .filter-message .btn-custom { margin: 0; }
-        /* Estilo para el modal de eliminación */
-        .modal-content { border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
-        .modal-header { background-color: #f8d7da; border-bottom: none; padding: 15px 20px; }
-        .modal-title { font-size: 18px; font-weight: 500; color: #721c24; }
-        .modal-body { padding: 20px; display: flex; align-items: center; }
-        .modal-body i { font-size: 24px; margin-right: 15px; }
-        .modal-body p { margin: 0; font-size: 16px; color: #333; }
-        .modal-footer { border-top: none; padding: 10px 20px; }
-        .modal-footer .btn-secondary { background-color: #00ADEF; border-color: #00ADEF; color: #FFFFFF; font-weight: 500; border-radius: 4px; }
-        .modal-footer .btn-secondary:hover { background-color: #008BCF; border-color: #008BCF; }
-        .modal-footer .btn-danger { background-color: #dc3545; border-color: #dc3545; font-weight: 500; border-radius: 4px; }
-        .modal-footer .btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
-        /* Estilo para el modal de edición */
-        .edit-modal-header { background-color: #d1ecf1; border-bottom: none; padding: 15px 20px; }
-        .edit-modal-title { font-size: 18px; font-weight: 500; color: #0c5460; }
-        .edit-modal-body i { color: #00ADEF; }
-        .edit-modal-footer .btn-primary { background-color: #00ADEF; border-color: #00ADEF; font-weight: 500; border-radius: 4px; }
-        .edit-modal-footer .btn-primary:hover { background-color: #008BCF; border-color: #008BCF; }
-        /* Estilo para el modal de inserción */
-        .modal-dialog { max-width: 700px; } /* Aumentar el ancho del modal */
-        .insert-modal-header {
-            background-color: #d1ecf1;
-            border-bottom: none;
-            padding: 15px 20px;
-        }
-        .insert-modal-title {
-            font-size: 18px;
-            font-weight: 500;
-            color: #0c5460;
-        }
-        .insert-modal-title i {
-            color: #00ADEF;
-        }
-        .insert-modal-body {
-            padding: 20px;
-        }
-        .insert-modal-body .form-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        .insert-modal-body .form-control {
-            width: 100%;
-            padding: 8px;
-            font-size: 14px;
-            border-radius: 4px;
-            border: 1px solid #E0E0E0;
-        }
-        .insert-modal-body .form-control:focus {
-            border-color: #00ADEF;
-            box-shadow: 0 0 5px rgba(0, 173, 239, 0.3);
-        }
-        .insert-modal-footer .btn-primary {
-            background-color: #00ADEF;
-            border-color: #00ADEF;
-            font-weight: 500;
-            border-radius: 4px;
-        }
-        .insert-modal-footer .btn-primary:hover {
-            background-color: #008BCF;
-            border-color: #008BCF;
-        }
-        .insert-modal-footer .btn-secondary {
-            background-color: #6c757d;
-            border-color: #6c757d;
-            font-weight: 500;
-            border-radius: 4px;
-        }
-        .insert-modal-footer .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
+    <!-- Encabezado -->
     <div class="header">
         <h1>Personas en Agilidad</h1>
         {% if session.username %}
@@ -130,10 +24,15 @@
             </div>
         {% endif %}
     </div>
+
+    <!-- Contenedor principal -->
     <div class="container">
+        <!-- Botón de recarga -->
         <div class="reload-btn-container">
             <button class="btn-reload" id="reloadBtn"><i class="fas fa-sync"></i> Recargar Datos</button>
         </div>
+
+        <!-- Sección de filtros -->
         <div class="section">
             <h3>Filtros</h3>
             <div id="filterMessage" class="filter-message" style="display: none;">
@@ -144,26 +43,44 @@
             <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">Filtros Avanzados</button>
             <div class="collapse" id="advancedFilters">
                 <div class="row">
-                    <div class="col-md-4 mb-2"><input type="text" id="trenFilter" class="form-control" placeholder="Filtrar por Tren" data-bs-toggle="tooltip" title="Escribe para filtrar equipos por tren"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="equipoFilter" class="form-control" placeholder="Filtrar por Equipo Ágil" data-bs-toggle="tooltip" title="Escribe para filtrar por equipo ágil"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="embajadorFilter" class="form-control" placeholder="Filtrar por Embajador" data-bs-toggle="tooltip" title="Escribe para filtrar por embajador"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="areaPertenenciaFilter" class="form-control" placeholder="Filtrar por Área de pertenencia" data-bs-toggle="tooltip" title="Escribe para filtrar por área de pertenencia"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="poFilter" class="form-control" placeholder="Filtrar por PO" data-bs-toggle="tooltip" title="Escribe para filtrar por PO"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="smFilter" class="form-control" placeholder="Filtrar por SM" data-bs-toggle="tooltip" title="Escribe para filtrar por SM"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="facilitadorFilter" class="form-control" placeholder="Filtrar por Facilitador Disciplina" data-bs-toggle="tooltip" title="Escribe para filtrar por facilitador"></div>
-                    <div class="col-md-4 mb-2"><input type="text" id="zonaResidenciaFilter" class="form-control" placeholder="Filtrar por Zona de residencia" data-bs-toggle="tooltip" title="Escribe para filtrar por zona de residencia"></div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="trenFilter" class="form-control" placeholder="Filtrar por Tren" data-bs-toggle="tooltip" title="Escribe para filtrar equipos por tren">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="equipoFilter" class="form-control" placeholder="Filtrar por Equipo Ágil" data-bs-toggle="tooltip" title="Escribe para filtrar por equipo ágil">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="embajadorFilter" class="form-control" placeholder="Filtrar por Embajador" data-bs-toggle="tooltip" title="Escribe para filtrar por embajador">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="areaPertenenciaFilter" class="form-control" placeholder="Filtrar por Área de pertenencia" data-bs-toggle="tooltip" title="Escribe para filtrar por área de pertenencia">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="poFilter" class="form-control" placeholder="Filtrar por PO" data-bs-toggle="tooltip" title="Escribe para filtrar por PO">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="smFilter" class="form-control" placeholder="Filtrar por SM" data-bs-toggle="tooltip" title="Escribe para filtrar por SM">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="facilitadorFilter" class="form-control" placeholder="Filtrar por Facilitador Disciplina" data-bs-toggle="tooltip" title="Escribe para filtrar por facilitador">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="text" id="zonaResidenciaFilter" class="form-control" placeholder="Filtrar por Zona de residencia" data-bs-toggle="tooltip" title="Escribe para filtrar por zona de residencia">
+                    </div>
                 </div>
             </div>
             <button class="btn-custom" id="exportBtn"><i class="fas fa-download"></i> Exportar a CSV</button>
             {% if role == 'Editor' %}
-            <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
+                <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
             {% endif %}
             <a href="{{ url_for('dashboard') }}" class="btn-custom"><i class="fas fa-chart-bar"></i> Ver Tablero</a>
             <button class="btn-custom" onclick="clearFilters()"><i class="fas fa-eraser"></i> Limpiar Filtros</button>
             {% if role == 'Editor' %}
-            <button class="btn-custom btn-primary" id="addRowBtn"><i class="fas fa-plus"></i> Insertar Fila</button>
+                <button class="btn-custom btn-primary" id="addRowBtn"><i class="fas fa-plus"></i> Insertar Fila</button>
             {% endif %}
         </div>
+
+        <!-- Sección de datos -->
         <div class="section">
             <h3>Datos</h3>
             <div id="loading-spinner">
@@ -195,6 +112,7 @@
             <div id="error-message" class="error-message"></div>
             <div id="no-data-message" class="no-data-message"></div>
         </div>
+
         <!-- Modal para Insertar Nueva Fila -->
         <div class="modal fade" id="addRowModal" tabindex="-1" aria-labelledby="addRowModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -256,6 +174,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Modal para Confirmar Eliminación -->
         <div class="modal fade" id="deleteRowModal" tabindex="-1" aria-labelledby="deleteRowModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -275,6 +194,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Modal para Confirmar Edición -->
         <div class="modal fade" id="editRowModal" tabindex="-1" aria-labelledby="editRowModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -295,468 +215,10 @@
             </div>
         </div>
     </div>
+
+    <!-- Scripts externos -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const userRole = "{{ role }}";
-        let currentPage = 1;
-        const perPage = 10;
-        let sortBy = 'Tren';
-        let sortOrder = 'asc';
-        let rowToDelete = null;
-        let rowToEdit = null;
-        let updatesToConfirm = null;
-        let editButton = null;
-
-        // Función para obtener parámetros de la URL
-        function getQueryParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                tren: params.get('tren') || '',
-                equipo_agil: params.get('equipo_agil') || '',
-                embajador: params.get('embajador') || '',
-                area_pertenencia: params.get('area_pertenencia') || '',
-                po: params.get('po') || '',
-                sm: params.get('sm') || '',
-                facilitador_disciplina: params.get('facilitador_disciplina') || '',
-                zona_residencia: params.get('zona_residencia') || '',
-                search: params.get('search') || '',
-                returnToDashboard: params.get('returnToDashboard') === 'true',
-                xAxis: params.get('xAxis') || '',
-                yAxis: params.get('yAxis') || '',
-                chartType: params.get('chartType') || ''
-            };
-        }
-
-        // Aplicar filtros desde la URL al cargar la página
-        function applyFiltersFromURL() {
-            const params = getQueryParams();
-            document.getElementById('trenFilter').value = params.tren;
-            document.getElementById('equipoFilter').value = params.equipo_agil;
-            document.getElementById('embajadorFilter').value = params.embajador;
-            document.getElementById('areaPertenenciaFilter').value = params.area_pertenencia;
-            document.getElementById('poFilter').value = params.po;
-            document.getElementById('smFilter').value = params.sm;
-            document.getElementById('facilitadorFilter').value = params.facilitador_disciplina;
-            document.getElementById('zonaResidenciaFilter').value = params.zona_residencia;
-            document.getElementById('globalSearch').value = params.search;
-
-            // Mostrar mensaje de filtro aplicado y botón para volver al gráfico
-            if (params.returnToDashboard) {
-                const filterMessage = document.getElementById('filterMessage');
-                const filterMessageText = document.querySelector('#filterMessage p');
-                let appliedFilter = '';
-                if (params.tren) appliedFilter = `Tren: ${params.tren}`;
-                else if (params.equipo_agil) appliedFilter = `Equipo Ágil: ${params.equipo_agil}`;
-                else if (params.embajador) appliedFilter = `Embajador: ${params.embajador}`;
-                else if (params.area_pertenencia) appliedFilter = `Área de pertenencia: ${params.area_pertenencia}`;
-                else if (params.po) appliedFilter = `PO: ${params.po}`;
-                else if (params.sm) appliedFilter = `SM: ${params.sm}`;
-                else if (params.facilitador_disciplina) appliedFilter = `Facilitador Disciplina: ${params.facilitador_disciplina}`;
-                else if (params.zona_residencia) appliedFilter = `Zona de residencia: ${params.zona_residencia}`;
-
-                if (appliedFilter) {
-                    filterMessageText.textContent = `Mostrando datos filtrados por ${appliedFilter}`;
-                    filterMessage.style.display = 'flex';
-
-                    // Configurar el botón para volver al gráfico
-                    const returnToChartBtn = document.getElementById('returnToChartBtn');
-                    returnToChartBtn.addEventListener('click', () => {
-                        const returnURL = `/dashboard?xAxis=${encodeURIComponent(params.xAxis)}&yAxis=${encodeURIComponent(params.yAxis)}&chartType=${encodeURIComponent(params.chartType)}`;
-                        window.location.href = returnURL;
-                    });
-                }
-            }
-        }
-
-        function showLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'block'; }
-        function hideLoadingSpinner() { document.getElementById('loading-spinner').style.display = 'none'; }
-
-        function fetchData(page = 1) {
-            currentPage = page;
-            const tren = document.getElementById('trenFilter').value;
-            const equipo = document.getElementById('equipoFilter').value;
-            const embajador = document.getElementById('embajadorFilter').value;
-            const areaPertenencia = document.getElementById('areaPertenenciaFilter').value;
-            const po = document.getElementById('poFilter').value;
-            const sm = document.getElementById('smFilter').value;
-            const facilitador = document.getElementById('facilitadorFilter').value;
-            const zonaResidencia = document.getElementById('zonaResidenciaFilter').value;
-            const search = document.getElementById('globalSearch').value;
-
-            showLoadingSpinner();
-            fetch(`/api/datos?tren=${tren}&equipo=${equipo}&embajador=${embajador}&area_pertenencia=${areaPertenencia}&po=${po}&sm=${sm}&facilitador=${facilitador}&zona_residencia=${zonaResidencia}&search=${search}&sort_by=${sortBy}&sort_order=${sortOrder}&page=${page}&per_page=${perPage}`)
-                .then(response => response.ok ? response.json() : Promise.reject('Error en la respuesta del servidor'))
-                .then(data => {
-                    const tbody = document.getElementById('tableBody');
-                    tbody.innerHTML = '';
-                    const noDataMessage = document.getElementById('no-data-message');
-                    if (data.total === 0) {
-                        noDataMessage.textContent = data.message || 'No se encontraron datos';
-                        noDataMessage.style.display = 'block';
-                    } else {
-                        noDataMessage.style.display = 'none';
-                        console.log("Datos recibidos:", data.data);
-                        data.data.forEach(row => {
-                            const rowIndex = row.row_index;
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Tren">${row['Tren'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Equipo Agil">${row['Equipo Agil'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Embajador">${row['Embajador'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Área de pertenencia">${row['Área de pertenencia'] !== undefined && row['Área de pertenencia'] !== '' ? row['Área de pertenencia'] : 'No disponible'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="PO">${row['PO'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="SM">${row['SM'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Facilitador Disciplina">${row['Facilitador Disciplina'] || '-'}</td>
-                                <td class="editable-cell" data-row="${rowIndex}" data-column="Zona de residencia">${row['Zona de residencia'] !== undefined && row['Zona de residencia'] !== '' ? row['Zona de residencia'] : 'No disponible'}</td>
-                                <td class="action-cell">
-                                    ${userRole === 'Editor' ? `
-                                        <span class="edit-btn" onclick="startEditRow(this, ${rowIndex})"><i class="fas fa-edit"></i></span>
-                                        <span class="confirm-btn" onclick="confirmEditRow(this, ${rowIndex})"><i class="fas fa-check"></i></span>
-                                        <span class="cancel-btn" onclick="cancelEditRow(this, ${rowIndex})"><i class="fas fa-times"></i></span>
-                                        <span class="delete-btn" onclick="showDeleteModal(this, ${rowIndex})"><i class="fas fa-trash"></i></span>
-                                    ` : ''}
-                                </td>
-                            `;
-                            tr.dataset.tren = row['Tren'] || 'Sin Tren';
-                            tr.dataset.equipo = row['Equipo Agil'] || 'Sin Equipo';
-                            tbody.appendChild(tr);
-                        });
-                    }
-                    updatePagination(data.total);
-                })
-                .catch(err => {
-                    console.error('Error fetching data:', err);
-                    document.getElementById('no-data-message').textContent = 'Error al cargar los datos';
-                    document.getElementById('no-data-message').style.display = 'block';
-                })
-                .finally(() => hideLoadingSpinner());
-        }
-
-        function updatePagination(total) {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-            const totalPages = Math.ceil(total / perPage);
-            const start = (currentPage - 1) * perPage + 1;
-            const end = Math.min(currentPage * perPage, total);
-            document.getElementById('paginationInfo').textContent = `Mostrando ${start}-${end} de ${total} registros`;
-
-            for (let i = 1; i <= totalPages; i++) {
-                const li = document.createElement('li');
-                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                const a = document.createElement('a');
-                a.className = 'page-link';
-                a.textContent = i;
-                a.href = '#';
-                a.addEventListener('click', (e) => { e.preventDefault(); fetchData(i); });
-                li.appendChild(a);
-                pagination.appendChild(li);
-            }
-        }
-
-        function exportToCSV() {
-            const tren = document.getElementById('trenFilter').value;
-            const equipo = document.getElementById('equipoFilter').value;
-            const embajador = document.getElementById('embajadorFilter').value;
-            const areaPertenencia = document.getElementById('areaPertenenciaFilter').value;
-            const po = document.getElementById('poFilter').value;
-            const sm = document.getElementById('smFilter').value;
-            const facilitador = document.getElementById('facilitadorFilter').value;
-            const zonaResidencia = document.getElementById('zonaResidenciaFilter').value;
-            const search = document.getElementById('globalSearch').value;
-            window.location.href = `/api/export?tren=${tren}&equipo=${equipo}&embajador=${embajador}&area_pertenencia=${areaPertenencia}&po=${po}&sm=${sm}&facilitador=${facilitador}&zona_residencia=${zonaResidencia}&search=${search}`;
-        }
-
-        function clearFilters() {
-            document.querySelectorAll('input.form-control').forEach(input => input.value = '');
-            document.getElementById('filterMessage').style.display = 'none';
-            fetchData(1);
-        }
-
-        document.getElementById('reloadBtn').addEventListener('click', () => {
-            showLoadingSpinner();
-            fetch('/api/reload')
-                .then(response => response.json())
-                .then(data => {
-                    const noDataMessage = document.getElementById('no-data-message');
-                    if (data.total === 0) {
-                        noDataMessage.textContent = data.message || 'No se encontraron datos';
-                        noDataMessage.style.display = 'block';
-                    } else {
-                        noDataMessage.style.display = 'none';
-                        fetchData(1);
-                    }
-                })
-                .catch(err => {
-                    console.error('Error reloading data:', err);
-                    document.getElementById('no-data-message').textContent = 'Error al recargar los datos';
-                    document.getElementById('no-data-message').style.display = 'block';
-                })
-                .finally(() => hideLoadingSpinner());
-        });
-
-        function startEditRow(button, rowIndex) {
-            if (userRole !== 'Editor') { alert('No tienes permisos para editar datos.'); return; }
-            const row = button.closest('tr');
-            const cells = row.querySelectorAll('.editable-cell');
-            const oldValues = {};
-            cells.forEach(cell => {
-                const column = cell.getAttribute('data-column');
-                oldValues[column] = cell.textContent.trim();
-                cell.classList.add('editing');
-                cell.setAttribute('contenteditable', 'true');
-                cell.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        confirmEditRow(button, rowIndex);
-                    }
-                });
-            });
-            button.style.display = 'none';
-            row.querySelector('.confirm-btn').style.display = 'inline-block';
-            row.querySelector('.cancel-btn').style.display = 'inline-block';
-            row.dataset.oldValues = JSON.stringify(oldValues);
-        }
-
-        function confirmEditRow(button, rowIndex) {
-            editButton = button;
-            rowToEdit = rowIndex;
-            const row = button.closest('tr');
-            const cells = row.querySelectorAll('.editable-cell');
-            const oldValues = JSON.parse(row.dataset.oldValues || '{}');
-            const updates = [];
-            let hasChanges = false;
-
-            cells.forEach(cell => {
-                const column = cell.getAttribute('data-column');
-                const newValue = cell.textContent.trim();
-                const oldValue = oldValues[column] || '';
-                if (newValue !== oldValue) {
-                    hasChanges = true;
-                    updates.push({ row: rowIndex, column, value: newValue });
-                }
-                cell.classList.remove('editing');
-                cell.removeAttribute('contenteditable');
-            });
-
-            if (!hasChanges) {
-                button.style.display = 'none';
-                row.querySelector('.cancel-btn').style.display = 'none';
-                row.querySelector('.edit-btn').style.display = 'inline-block';
-                return;
-            }
-
-            updatesToConfirm = updates;
-            const equipo = row.dataset.equipo;
-            const changes = updates.map(update => `${update.column}: "${update.value}"`).join(', ');
-            const message = `Estás a punto de modificar el equipo "${equipo}". Los cambios son: ${changes}. ¿Deseas continuar?`;
-            document.getElementById('editRowMessage').textContent = message;
-            const modal = new bootstrap.Modal(document.getElementById('editRowModal'));
-            modal.show();
-
-            // Establecer foco en el botón "Guardar Cambios" y agregar evento para Enter
-            const confirmEditBtn = document.getElementById('confirmEditBtn');
-            confirmEditBtn.focus();
-            const editModal = document.getElementById('editRowModal');
-            editModal.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    saveEditRow();
-                }
-            });
-        }
-
-        function saveEditRow() {
-            if (!updatesToConfirm || !rowToEdit) return;
-
-            // Mostrar el spinner al inicio de la operación
-            showLoadingSpinner();
-
-            Promise.all(updatesToConfirm.map(update => 
-                fetch('/api/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(update)
-                }).then(response => response.json())
-            ))
-            .then(results => {
-                const errors = results.filter(r => r.error);
-                if (errors.length > 0) {
-                    document.getElementById('error-message').textContent = errors.map(e => e.error).join(', ');
-                    document.getElementById('error-message').style.display = 'block';
-                    setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
-                } else {
-                    document.getElementById('message').textContent = 'Fila actualizada correctamente';
-                    document.getElementById('message').style.display = 'block';
-                    setTimeout(() => document.getElementById('message').style.display = 'none', 2000);
-                    fetchData(currentPage);
-                }
-                editButton.style.display = 'none';
-                editButton.closest('tr').querySelector('.cancel-btn').style.display = 'none';
-                editButton.closest('tr').querySelector('.edit-btn').style.display = 'inline-block';
-                bootstrap.Modal.getInstance(document.getElementById('editRowModal')).hide();
-                rowToEdit = null;
-                updatesToConfirm = null;
-                editButton = null;
-            })
-            .catch(err => {
-                console.error('Error updating row:', err);
-                document.getElementById('error-message').textContent = 'Error al actualizar la fila';
-                document.getElementById('error-message').style.display = 'block';
-                setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
-                bootstrap.Modal.getInstance(document.getElementById('editRowModal')).hide();
-                rowToEdit = null;
-                updatesToConfirm = null;
-                editButton = null;
-            })
-            .finally(() => {
-                // Asegurarse de que el spinner se oculte siempre
-                hideLoadingSpinner();
-            });
-        }
-
-        function cancelEditRow(button, rowIndex) {
-            const row = button.closest('tr');
-            const oldValues = JSON.parse(row.dataset.oldValues);
-            row.querySelectorAll('.editable-cell').forEach(cell => {
-                const column = cell.getAttribute('data-column');
-                cell.textContent = oldValues[column];
-                cell.classList.remove('editing');
-                cell.removeAttribute('contenteditable');
-            });
-            button.style.display = 'none';
-            row.querySelector('.edit-btn').style.display = 'inline-block';
-            row.querySelector('.confirm-btn').style.display = 'none';
-        }
-
-        function sortTable(column) {
-            if (sortBy === column) sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            else { sortBy = column; sortOrder = 'asc'; }
-            fetchData(1);
-        }
-
-        function showDeleteModal(button, rowIndex) {
-            if (userRole !== 'Editor') { alert('No tienes permisos para eliminar datos.'); return; }
-            rowToDelete = rowIndex;
-            const row = button.closest('tr');
-            const tren = row.dataset.tren;
-            const equipo = row.dataset.equipo;
-            const message = `Estás a punto de eliminar el equipo "${equipo}" del tren "${tren}". Esta acción no se puede deshacer. ¿Deseas continuar?`;
-            document.getElementById('deleteRowMessage').textContent = message;
-            const modal = new bootstrap.Modal(document.getElementById('deleteRowModal'));
-            modal.show();
-
-            // Establecer foco en el botón "Eliminar" y agregar evento para Enter
-            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-            confirmDeleteBtn.focus();
-            const deleteModal = document.getElementById('deleteRowModal');
-            deleteModal.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    deleteRow();
-                }
-            });
-        }
-
-        function deleteRow() {
-            if (!rowToDelete) return;
-
-            // Mostrar el spinner al inicio de la operación
-            showLoadingSpinner();
-
-            fetch('/api/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ row: rowToDelete })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    document.getElementById('error-message').textContent = data.error;
-                    document.getElementById('error-message').style.display = 'block';
-                    setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
-                } else {
-                    document.getElementById('message').textContent = 'Fila eliminada correctamente';
-                    document.getElementById('message').style.display = 'block';
-                    setTimeout(() => document.getElementById('message').style.display = 'none', 2000);
-                    fetchData(currentPage);
-                }
-                bootstrap.Modal.getInstance(document.getElementById('deleteRowModal')).hide();
-                rowToDelete = null;
-            })
-            .catch(err => {
-                console.error('Error deleting row:', err);
-                document.getElementById('error-message').textContent = 'Error al eliminar la fila';
-                document.getElementById('error-message').style.display = 'block';
-                setTimeout(() => document.getElementById('error-message').style.display = 'none', 2000);
-                bootstrap.Modal.getInstance(document.getElementById('deleteRowModal')).hide();
-                rowToDelete = null;
-            })
-            .finally(() => {
-                // Asegurarse de que el spinner se oculte siempre
-                hideLoadingSpinner();
-            });
-        }
-
-        function insertRow() {
-            if (userRole !== 'Editor') { alert('No tienes permisos para insertar datos.'); return; }
-            const modal = new bootstrap.Modal(document.getElementById('addRowModal'));
-            modal.show();
-
-            // Establecer foco en el primer campo y agregar evento para Enter
-            const firstInput = document.getElementById('newTren');
-            firstInput.focus();
-            const addRowModal = document.getElementById('addRowModal');
-            addRowModal.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    submitNewRow();
-                }
-            });
-        }
-
-        function submitNewRow() {
-            const newRow = {
-                'Tren': document.getElementById('newTren').value || '',
-                'Equipo Agil': document.getElementById('newEquipo').value || '',
-                'Embajador': document.getElementById('newEmbajador').value || '',
-                'Área de pertenencia': document.getElementById('newAreaPertenencia').value || '',
-                'PO': document.getElementById('newPO').value || '',
-                'SM': document.getElementById('newSM').value || '',
-                'Facilitador Disciplina': document.getElementById('newFacilitador').value || '',
-                'Zona de residencia': document.getElementById('newZonaResidencia').value || ''
-            };
-            fetch('/api/insert', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newRow)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) alert(data.error);
-                else {
-                    fetchData(currentPage);
-                    bootstrap.Modal.getInstance(document.getElementById('addRowModal')).hide();
-                }
-            });
-        }
-
-        document.getElementById('confirmDeleteBtn').addEventListener('click', deleteRow);
-        document.getElementById('confirmEditBtn').addEventListener('click', saveEditRow);
-        document.querySelectorAll('input.form-control').forEach(input => input.addEventListener('input', () => fetchData(1)));
-        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
-        const addRowBtn = document.getElementById('addRowBtn');
-        if (addRowBtn) addRowBtn.addEventListener('click', insertRow);
-
-        // Aplicar filtros desde la URL al cargar la página y luego cargar los datos
-        document.addEventListener('DOMContentLoaded', () => {
-            applyFiltersFromURL();
-            fetchData();
-        });
-
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-    </script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'923e0d9708f253b1',t:'MTc0MjU2NjQzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 </html>

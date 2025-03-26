@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash, Response
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash, Response, send_from_directory
 from functools import wraps, lru_cache
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -6,12 +6,16 @@ import csv
 from io import StringIO
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 app = Flask(__name__)
-app.secret_key = "clave_secreta_muy_segura_123"
+# Cargar la clave secreta desde una variable de entorno
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'clave_secreta_muy_segura_123')  # Valor por defecto para desarrollo
+# Configurar la duración de la sesión permanente (por ejemplo, 7 días)
+app.permanent_session_lifetime = timedelta(days=7)
 
+# Configuración de Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 credentials_json = os.getenv('GOOGLE_CREDENTIALS')
@@ -49,16 +53,18 @@ except gspread.exceptions.WorksheetNotFound as e:
     else:
         raise e
 
+# Decoradores
 def login_required(f):
+    @wraps(f)
     def wrap(*args, **kwargs):
         if 'username' not in session:
             flash("Por favor, inicia sesión para acceder a esta página.", "error")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
-    wrap.__name__ = f.__name__
     return wrap
 
 def editor_required(f):
+    @wraps(f)
     def wrap(*args, **kwargs):
         if 'role' not in session or session['role'] != 'Editor':
             if request.path.startswith('/api/'):
@@ -66,9 +72,9 @@ def editor_required(f):
             flash("No tienes permisos para realizar esta acción.", "error")
             return redirect(url_for('index'))
         return f(*args, **kwargs)
-    wrap.__name__ = f.__name__
     return wrap
 
+# Caché para datos
 @lru_cache(maxsize=128)
 def load_data():
     try:
@@ -95,27 +101,25 @@ def load_data():
         print(f"Error al cargar datos: {e}")
         return []
 
+# Rutas
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        remember = request.form.get('remember_me') == 'on'
+        remember = request.form.get('remember') == 'on'  # Ajustado a nombre del checkbox en login.html
         try:
             users = user_sheet.get_all_records()
             for user in users:
                 if user['Username'] == username and user['Password'] == password:
                     session['username'] = username
                     session['role'] = user['Role']
-                    if remember:
-                        session.permanent = True
-                    else:
-                        session.permanent = False
+                    session.permanent = remember
                     flash("Inicio de sesión exitoso.", "success")
                     return redirect(url_for('index'))
             flash("Usuario o contraseña incorrectos.", "error")
         except Exception as e:
-            flash("Error al intentar iniciar sesión. Por favor, intenta de nuevo.", "error")
+            flash(f"Error al intentar iniciar sesión: {str(e)}", "error")
             print(f"Error al intentar iniciar sesión: {e}")
     return render_template('login.html')
 
@@ -135,9 +139,14 @@ def index():
 
 @app.route('/history')
 @login_required
-@editor_required  # Restringir acceso solo a Editores
+@editor_required
 def history_page():
     return render_template('history.html', role=session.get('role', ''))
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html', role=session.get('role', ''))  # Añadido role
 
 @app.route('/api/datos', methods=['GET'])
 @login_required
@@ -214,13 +223,11 @@ def export_data():
 
     export_data = [{k: v for k, v in row.items() if k != 'row_index'} for row in filtered_data]
     output = StringIO()
-    # Usar UTF-8 y añadir BOM para que Excel lo lea correctamente
     writer = csv.DictWriter(output, fieldnames=export_data[0].keys() if export_data else ['Tren', 'Equipo Agil', 'Embajador', 'Área de pertenencia', 'PO', 'SM', 'Facilitador Disciplina', 'Zona de residencia'])
     writer.writeheader()
     writer.writerows(export_data)
-    # Convertir el contenido a bytes con UTF-8 y añadir BOM
     csv_content = output.getvalue()
-    bom = '\ufeff'  # BOM para UTF-8
+    bom = '\ufeff'
     return Response(
         bom + csv_content,
         mimetype='text/csv; charset=utf-8',
@@ -231,16 +238,13 @@ def export_data():
 @login_required
 @editor_required
 def export_history():
-    # Usar history_sheet (de Google Sheets) en lugar de Historial
     history = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)
     output = StringIO()
-    # Usar UTF-8 y añadir BOM para que Excel lo lea correctamente
     writer = csv.DictWriter(output, fieldnames=['Fila', 'Columna', 'Valor Anterior', 'Nuevo Valor', 'Usuario', 'Fecha', 'Observaciones'])
     writer.writeheader()
     writer.writerows(history)
-    # Convertir el contenido a bytes con UTF-8 y añadir BOM
     csv_content = output.getvalue()
-    bom = '\ufeff'  # BOM para UTF-8
+    bom = '\ufeff'
     return Response(
         bom + csv_content,
         mimetype='text/csv; charset=utf-8',
@@ -341,7 +345,7 @@ def delete_data():
 
 @app.route('/api/history', methods=['GET'])
 @login_required
-@editor_required  # Restringir acceso solo a Editores
+@editor_required
 def get_history():
     user_filter = request.args.get('user', '').lower()
     date_filter = request.args.get('date', '')
@@ -349,7 +353,6 @@ def get_history():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
 
-    # Cargar el historial dinámicamente desde la hoja
     history = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)
 
     filtered_history = [
@@ -366,16 +369,10 @@ def get_history():
 
     return jsonify({'history': paginated_history, 'total': total})
 
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    return render_template('dashboard.html')
-
 @app.route('/api/dashboard', methods=['GET'])
 @login_required
 def get_dashboard_data():
     data = load_data()
-    # Cargar el historial dinámicamente para el dashboard
     history_data = sorted(history_sheet.get_all_records(), key=lambda x: x['Fecha'], reverse=True)[:5]
 
     teams_by_train = {}
@@ -431,7 +428,9 @@ def reload_data():
 
 @app.route('/favicon.ico')
 def favicon():
-    return '', 204
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'movistar-logo.ico', mimetype='image/x-icon')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Deshabilitar debug en producción
+    debug = os.getenv('FLASK_ENV', 'development') == 'development'
+    app.run(debug=debug)
