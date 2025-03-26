@@ -1,5 +1,4 @@
 // Variables globales
-const userRole = "{{ role }}";
 let currentPage = 1;
 const perPage = 10;
 let sortBy = 'Tren';
