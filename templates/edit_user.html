@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Personas en Agilidad</title>
+    <title>Editar Usuario - Personas en Agilidad</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='movistar-logo.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -13,51 +13,48 @@
 <body>
     <div class="header">
         <h1>Personas en Agilidad</h1>
+        {% if session.username %}
+            <div class="user-info">
+                <span>Usuario: {{ session.username }} ({{ session.role }}) | </span>
+                <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            </div>
+        {% endif %}
     </div>
 
     <div class="container">
         <div class="section">
-            <h3>Iniciar Sesión</h3>
+            <h3>Editar Usuario: {{ username }}</h3>
+            <a href="{{ url_for('admin_users') }}" class="btn-custom"><i class="fas fa-arrow-left"></i> Volver a Gestión de Usuarios</a>
 
             <!-- Mensajes de Flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        {% if category == 'error' and (message == 'Usuario o contraseña incorrectos.' or message.startswith('Error al intentar iniciar sesión') or message == 'Por favor, inicia sesión para acceder a esta página.') %}
-                            <div class="alert alert-{{ category }} mt-3" role="alert">
-                                {{ message }}
-                            </div>
-                        {% endif %}
+                        <div class="alert alert-{{ category }} mt-3" role="alert">
+                            {{ message }}
+                        </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
 
-            <!-- Formulario de Inicio de Sesión -->
+            <!-- Formulario para editar usuario -->
             <form method="POST" class="mt-4">
                 {{ form.csrf_token }}
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         {{ form.username.label(class="form-label") }}
                         {{ form.username(class="form-control") }}
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         {{ form.password.label(class="form-label") }}
                         {{ form.password(class="form-control") }}
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="form-check">
-                            {{ form.remember(class="form-check-input") }}
-                            {{ form.remember.label(class="form-check-label") }}
-                        </div>
+                    <div class="col-md-2 mb-3">
+                        {{ form.role.label(class="form-label") }}
+                        {{ form.role(class="form-select") }}
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        {{ form.submit(class="btn btn-primary w-100") }}
+                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                        {{ form.submit(class="btn btn-primary w-100", value="Guardar Cambios") }}
                     </div>
                 </div>
             </form>

@@ -8,6 +8,7 @@ import os
 import json
 from datetime import datetime, timedelta
 import pandas as pd
+from forms import UserForm, LoginForm  # Importar LoginForm
 
 app = Flask(__name__)
 # Cargar la clave secreta desde una variable de entorno
@@ -48,8 +49,7 @@ except gspread.exceptions.WorksheetNotFound as e:
     elif "Usuarios" in str(e):
         user_sheet = client.open("Datos de Equipos").add_worksheet(title="Usuarios", rows="100", cols="3")
         user_sheet.append_row(["Username", "Password", "Role"])
-        user_sheet.append_row(["lector1", "pass123", "Lector"])
-        user_sheet.append_row(["editor1", "pass456", "Editor"])
+        print("Hoja 'Usuarios' creada. Por favor, agrega un usuario administrador manualmente en Google Sheets.")
     else:
         raise e
 
@@ -67,6 +67,17 @@ def editor_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         if 'role' not in session or session['role'] != 'Editor':
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'No tienes permisos para realizar esta acción'}), 403
+            flash("No tienes permisos para realizar esta acción.", "error")
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return wrap
+
+def admin_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'role' not in session or session['role'] != 'Admin':
             if request.path.startswith('/api/'):
                 return jsonify({'error': 'No tienes permisos para realizar esta acción'}), 403
             flash("No tienes permisos para realizar esta acción.", "error")
@@ -104,10 +115,11 @@ def load_data():
 # Rutas
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        remember = request.form.get('remember') == 'on'  # Ajustado a nombre del checkbox en login.html
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        remember = form.remember.data
         try:
             users = user_sheet.get_all_records()
             for user in users:
@@ -115,13 +127,15 @@ def login():
                     session['username'] = username
                     session['role'] = user['Role']
                     session.permanent = remember
-                    flash("Inicio de sesión exitoso.", "success")
+                    app.logger.info(f"Usuario logueado: {username}, Rol: {session['role']}")
+                    # Eliminar este mensaje flash
+                    # flash("Inicio de sesión exitoso.", "success")
                     return redirect(url_for('index'))
             flash("Usuario o contraseña incorrectos.", "error")
         except Exception as e:
             flash(f"Error al intentar iniciar sesión: {str(e)}", "error")
             print(f"Error al intentar iniciar sesión: {e}")
-    return render_template('login.html')
+    return render_template('login.html', form=form)
 
 @app.route('/logout')
 @login_required
@@ -135,6 +149,7 @@ def logout():
 @login_required
 def index():
     load_data.cache_clear()
+    app.logger.info(f"Renderizando index.html con rol: {session.get('role', '')}")
     return render_template('index.html', role=session.get('role', ''))
 
 @app.route('/history')
@@ -146,7 +161,142 @@ def history_page():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', role=session.get('role', ''))  # Añadido role
+    return render_template('dashboard.html', role=session.get('role', ''))
+
+# Ruta para la página de administración de usuarios
+@app.route('/admin/users', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_users():
+    form = UserForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        role = form.role.data
+
+        try:
+            users = user_sheet.get_all_records()
+            if any(user['Username'] == username for user in users):
+                flash("El nombre de usuario ya existe.", "error")
+                return redirect(url_for('admin_users'))
+
+            user_sheet.append_row([username, password, role])
+
+            # Registrar en el historial
+            row_index = len(user_sheet.get_all_values())
+            new_entry = {
+                'Fila': row_index,
+                'Columna': 'Nuevo Usuario',
+                'Valor Anterior': '',
+                'Nuevo Valor': f"Username: {username}, Role: {role}",
+                'Usuario': session['username'],
+                'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Observaciones': 'Usuario creado'
+            }
+            history_sheet.append_row([new_entry['Fila'], new_entry['Columna'], new_entry['Valor Anterior'], 
+                                     new_entry['Nuevo Valor'], new_entry['Usuario'], new_entry['Fecha'], 
+                                     new_entry['Observaciones']])
+
+            flash("Usuario agregado correctamente.", "success")
+            return redirect(url_for('admin_users'))
+        except Exception as e:
+            flash(f"Error al agregar usuario: {str(e)}", "error")
+
+    users = user_sheet.get_all_records()
+    return render_template('admin.html', form=form, users=users, role=session.get('role', ''))
+
+# Ruta para editar un usuario
+@app.route('/admin/users/edit/<username>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(username):
+    form = UserForm()
+    users = user_sheet.get_all_records()
+    user = next((u for u in users if u['Username'] == username), None)
+
+    if not user:
+        flash("Usuario no encontrado.", "error")
+        return redirect(url_for('admin_users'))
+
+    row_index = users.index(user) + 2  # +2 porque las filas en Google Sheets empiezan en 1 y hay un encabezado
+
+    if form.validate_on_submit():
+        new_username = form.username.data
+        password = form.password.data
+        role = form.role.data
+
+        try:
+            if new_username != username and any(u['Username'] == new_username for u in users):
+                flash("El nombre de usuario ya existe.", "error")
+                return redirect(url_for('edit_user', username=username))
+
+            user_sheet.update_cell(row_index, 1, new_username)
+            user_sheet.update_cell(row_index, 2, password)
+            user_sheet.update_cell(row_index, 3, role)
+
+            # Registrar en el historial
+            new_entry = {
+                'Fila': row_index,
+                'Columna': 'Usuario Actualizado',
+                'Valor Anterior': f"Username: {username}, Role: {user['Role']}",
+                'Nuevo Valor': f"Username: {new_username}, Role: {role}",
+                'Usuario': session['username'],
+                'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Observaciones': 'Usuario actualizado'
+            }
+            history_sheet.append_row([new_entry['Fila'], new_entry['Columna'], new_entry['Valor Anterior'], 
+                                     new_entry['Nuevo Valor'], new_entry['Usuario'], new_entry['Fecha'], 
+                                     new_entry['Observaciones']])
+
+            flash("Usuario actualizado correctamente.", "success")
+            return redirect(url_for('admin_users'))
+        except Exception as e:
+            flash(f"Error al actualizar usuario: {str(e)}", "error")
+
+    # Prellenar el formulario con los datos del usuario
+    form.username.data = user['Username']
+    form.password.data = user['Password']
+    form.role.data = user['Role']
+    return render_template('edit_user.html', form=form, username=username, role=session.get('role', ''))
+
+# Ruta para eliminar un usuario
+@app.route('/admin/users/delete/<username>', methods=['GET'])
+@login_required
+@admin_required
+def delete_user(username):
+    try:
+        users = user_sheet.get_all_records()
+        user = next((u for u in users if u['Username'] == username), None)
+
+        if not user:
+            flash("Usuario no encontrado.", "error")
+            return redirect(url_for('admin_users'))
+
+        if user['Username'] == session['username']:
+            flash("No puedes eliminar tu propio usuario.", "error")
+            return redirect(url_for('admin_users'))
+
+        row_index = users.index(user) + 2
+        user_sheet.delete_rows(row_index)
+
+        # Registrar en el historial
+        new_entry = {
+            'Fila': row_index,
+            'Columna': 'Usuario Eliminado',
+            'Valor Anterior': f"Username: {username}, Role: {user['Role']}",
+            'Nuevo Valor': '',
+            'Usuario': session['username'],
+            'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'Observaciones': 'Usuario eliminado'
+        }
+        history_sheet.append_row([new_entry['Fila'], new_entry['Columna'], new_entry['Valor Anterior'], 
+                                 new_entry['Nuevo Valor'], new_entry['Usuario'], new_entry['Fecha'], 
+                                 new_entry['Observaciones']])
+
+        flash("Usuario eliminado correctamente.", "success")
+    except Exception as e:
+        flash(f"Error al eliminar usuario: {str(e)}", "error")
+    return redirect(url_for('admin_users'))
 
 @app.route('/api/datos', methods=['GET'])
 @login_required
