@@ -1,0 +1,8 @@
+flask
+flask-wtf
+gspread
+oauth2client
+google-auth
+bcrypt
+pandas
+gunicorn
