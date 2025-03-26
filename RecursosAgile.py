@@ -9,6 +9,7 @@ import json
 from datetime import datetime, timedelta
 import pandas as pd
 from forms import UserForm, LoginForm  # Importar LoginForm
+import bcrypt
 
 app = Flask(__name__)
 # Cargar la clave secreta desde una variable de entorno
@@ -122,14 +123,16 @@ def login():
         remember = form.remember.data
         try:
             users = user_sheet.get_all_records()
+            if not users:
+                flash("No hay usuarios registrados. Por favor, agrega un usuario administrador en la hoja 'Usuarios' de Google Sheets.", "error")
+                return render_template('login.html', form=form)
             for user in users:
-                if user['Username'] == username and user['Password'] == password:
+                # Comparar la contraseña ingresada con la contraseña cifrada
+                if user['Username'] == username and bcrypt.checkpw(password.encode('utf-8'), user['Password'].encode('utf-8')):
                     session['username'] = username
                     session['role'] = user['Role']
                     session.permanent = remember
                     app.logger.info(f"Usuario logueado: {username}, Rol: {session['role']}")
-                    # Eliminar este mensaje flash
-                    # flash("Inicio de sesión exitoso.", "success")
                     return redirect(url_for('index'))
             flash("Usuario o contraseña incorrectos.", "error")
         except Exception as e:
@@ -169,6 +172,44 @@ def dashboard():
 @admin_required
 def admin_users():
     form = UserForm()
+    if request.method == 'POST':
+        if 'action' in request.form:
+            action = request.form['action']
+            row_index = int(request.form['row_index']) + 1  # +1 porque la primera fila es el encabezado
+
+            if action == 'delete':
+                try:
+                    user_sheet.delete_rows(row_index)
+                    flash("Usuario eliminado correctamente.", "success")
+                except Exception as e:
+                    flash(f"Error al eliminar usuario: {str(e)}", "error")
+                return redirect(url_for('admin_users'))
+
+            elif action == 'edit':
+                username = request.form['username']
+                password = request.form['password']
+                role = request.form['role']
+
+                try:
+                    users = user_sheet.get_all_records()
+                    if any(user['Username'] == username and user != users[row_index - 1] for user in users):
+                        flash("El nombre de usuario ya existe.", "error")
+                        return redirect(url_for('admin_users'))
+
+                    # Si se proporciona una nueva contraseña, cifrarla; si no, mantener la existente
+                    if password:
+                        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    else:
+                        hashed_password = users[row_index - 1]['Password']  # Mantener la contraseña existente
+
+                    # Actualizar la fila en la hoja
+                    user_sheet.update_row(row_index, [username, hashed_password, role])
+
+                    flash("Usuario actualizado correctamente.", "success")
+                except Exception as e:
+                    flash(f"Error al actualizar usuario: {str(e)}", "error")
+                return redirect(url_for('admin_users'))
+
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
@@ -180,7 +221,9 @@ def admin_users():
                 flash("El nombre de usuario ya existe.", "error")
                 return redirect(url_for('admin_users'))
 
-            user_sheet.append_row([username, password, role])
+            # Cifrar la contraseña antes de almacenarla
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            user_sheet.append_row([username, hashed_password, role])
 
             # Registrar en el historial
             row_index = len(user_sheet.get_all_values())
