@@ -4,7 +4,7 @@
     <!-- Configuración básica -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero - Personas en Agilidad</title>
+    <title>Dashboard - Personas en Agilidad</title>
 
     <!-- Estilos externos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,13 +15,11 @@
 <body>
     <!-- Encabezado -->
     <div class="header">
-        <h1>Personas en Agilidad</h1>
-        {% if session.username %}
-            <div class="user-info">
-                <span>Usuario: {{ session.username }} ({{ session.role }}) | </span>
-                <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
-            </div>
-        {% endif %}
+        <h1>RecursosAgile</h1>
+        <div class="user-info">
+            <span>Bienvenido, {{ session['username'] }} ({{ session['role'] }})</span>
+            <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+        </div>
     </div>
 
     <!-- Contenedor principal -->
@@ -30,8 +28,12 @@
         <div class="section">
             <h3>Tablero Personalizado</h3>
             <a href="{{ url_for('index') }}" class="btn-custom"><i class="fas fa-table"></i> Ver Tabla</a>
-            {% if role == 'Editor' %}
+            {% if session['role'] == 'Editor' %}
                 <a href="{{ url_for('history_page') }}" class="btn-custom"><i class="fas fa-history"></i> Ver Historial</a>
+            {% endif %}
+            <a href="{{ url_for('change_password') }}" class="btn-custom"><i class="fas fa-lock"></i> Cambiar Contraseña</a>
+            {% if session['role'] == 'Admin' %}
+                <a href="{{ url_for('admin_users') }}" class="btn-custom"><i class="fas fa-users"></i> Gestionar Usuarios</a>
             {% endif %}
         </div>
 

@@ -11,20 +11,20 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <div class="header">
-        <h1>Personas en Agilidad</h1>
+    <div class="header login-header">
+        <h1>RecursosAgile</h1>
     </div>
 
     <div class="container">
-        <div class="section">
-            <h3>Iniciar Sesión</h3>
+        <div class="login-container">
+            <h2>Iniciar Sesión</h2>
 
             <!-- Mensajes de Flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        {% if category == 'error' and (message == 'Usuario o contraseña incorrectos.' or message.startswith('Error al intentar iniciar sesión') or message == 'Por favor, inicia sesión para acceder a esta página.') %}
-                            <div class="alert alert-{{ category }} mt-3" role="alert">
+                        {% if category == 'danger' %}
+                            <div class="alert alert-danger mt-3" role="alert">
                                 {{ message }}
                             </div>
                         {% endif %}
@@ -35,30 +35,34 @@
             <!-- Formulario de Inicio de Sesión -->
             <form method="POST" class="mt-4">
                 {{ form.csrf_token }}
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        {{ form.username.label(class="form-label") }}
+                <div class="mb-3 position-relative">
+                    {{ form.username.label(class="form-label") }}
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
                         {{ form.username(class="form-control") }}
                     </div>
+                    {% for error in form.username.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
                 </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        {{ form.password.label(class="form-label") }}
+                <div class="mb-3 position-relative">
+                    {{ form.password.label(class="form-label") }}
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
                         {{ form.password(class="form-control") }}
                     </div>
+                    {% for error in form.password.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
                 </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="form-check">
-                            {{ form.remember(class="form-check-input") }}
-                            {{ form.remember.label(class="form-check-label") }}
-                        </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.remember(class="form-check-input") }}
+                        {{ form.remember.label(class="form-check-label") }}
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        {{ form.submit(class="btn btn-primary w-100") }}
-                    </div>
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-primary") }}
                 </div>
             </form>
         </div>

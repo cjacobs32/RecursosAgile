@@ -8,7 +8,7 @@ import os
 import json
 from datetime import datetime, timedelta
 import pandas as pd
-from forms import UserForm, LoginForm  # Importar LoginForm
+from forms import UserForm, LoginForm, ChangePasswordForm
 import bcrypt
 
 app = Flask(__name__)
@@ -48,8 +48,8 @@ except gspread.exceptions.WorksheetNotFound as e:
         history_sheet = client.open("Datos de Equipos").add_worksheet(title="Historial", rows="100", cols="7")
         history_sheet.append_row(["Fila", "Columna", "Valor Anterior", "Nuevo Valor", "Usuario", "Fecha", "Observaciones"])
     elif "Usuarios" in str(e):
-        user_sheet = client.open("Datos de Equipos").add_worksheet(title="Usuarios", rows="100", cols="3")
-        user_sheet.append_row(["Username", "Password", "Role"])
+        user_sheet = client.open("Datos de Equipos").add_worksheet(title="Usuarios", rows="100", cols="4")
+        user_sheet.append_row(["Username", "Password", "Role", "FirstLogin"])
         print("Hoja 'Usuarios' creada. Por favor, agrega un usuario administrador manualmente en Google Sheets.")
     else:
         raise e
@@ -59,8 +59,13 @@ def login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         if 'username' not in session:
-            flash("Por favor, inicia sesión para acceder a esta página.", "error")
+            flash("Por favor, inicia sesión para acceder a esta página.", "danger")
             return redirect(url_for('login'))
+
+        # Verificar si el usuario necesita cambiar su contraseña, pero no redirigir si ya está en /change-password
+        if session.get('first_login', 'False') == 'True' and request.endpoint != 'change_password':
+            return redirect(url_for('change_password', first_login=True))
+
         return f(*args, **kwargs)
     return wrap
 
@@ -70,7 +75,7 @@ def editor_required(f):
         if 'role' not in session or session['role'] != 'Editor':
             if request.path.startswith('/api/'):
                 return jsonify({'error': 'No tienes permisos para realizar esta acción'}), 403
-            flash("No tienes permisos para realizar esta acción.", "error")
+            flash("No tienes permisos para realizar esta acción.", "danger")
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return wrap
@@ -81,7 +86,7 @@ def admin_required(f):
         if 'role' not in session or session['role'] != 'Admin':
             if request.path.startswith('/api/'):
                 return jsonify({'error': 'No tienes permisos para realizar esta acción'}), 403
-            flash("No tienes permisos para realizar esta acción.", "error")
+            flash("No tienes permisos para realizar esta acción.", "danger")
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return wrap
@@ -116,28 +121,31 @@ def load_data():
 # Rutas
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'username' in session:
+        return redirect(url_for('dashboard'))
+
     form = LoginForm()
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
-        remember = form.remember.data
-        try:
-            users = user_sheet.get_all_records()
-            if not users:
-                flash("No hay usuarios registrados. Por favor, agrega un usuario administrador en la hoja 'Usuarios' de Google Sheets.", "error")
-                return render_template('login.html', form=form)
-            for user in users:
-                # Comparar la contraseña ingresada con la contraseña cifrada
-                if user['Username'] == username and bcrypt.checkpw(password.encode('utf-8'), user['Password'].encode('utf-8')):
-                    session['username'] = username
-                    session['role'] = user['Role']
-                    session.permanent = remember
-                    app.logger.info(f"Usuario logueado: {username}, Rol: {session['role']}")
-                    return redirect(url_for('index'))
-            flash("Usuario o contraseña incorrectos.", "error")
-        except Exception as e:
-            flash(f"Error al intentar iniciar sesión: {str(e)}", "error")
-            print(f"Error al intentar iniciar sesión: {e}")
+
+        # Buscar el usuario
+        users = user_sheet.get_all_records()
+        user = next((u for u in users if u['Username'] == username), None)
+
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['Password'].encode('utf-8')):
+            session['username'] = user['Username']
+            session['role'] = user['Role']
+            session['first_login'] = user.get('FirstLogin', 'False')  # Almacenar FirstLogin en la sesión
+            session['row_index'] = users.index(user) + 2  # Almacenar el índice de la fila para actualizaciones
+
+            if session['first_login'] == 'True':
+                return redirect(url_for('change_password', first_login=True))
+            else:
+                return redirect(url_for('dashboard'))
+        else:
+            flash('Usuario o contraseña incorrectos.', 'danger')
+
     return render_template('login.html', form=form)
 
 @app.route('/logout')
@@ -145,6 +153,8 @@ def login():
 def logout():
     session.pop('username', None)
     session.pop('role', None)
+    session.pop('first_login', None)
+    session.pop('row_index', None)
     flash("Has cerrado sesión.", "success")
     return redirect(url_for('login'))
 
@@ -166,6 +176,64 @@ def history_page():
 def dashboard():
     return render_template('dashboard.html', role=session.get('role', ''))
 
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    # Verificar si es un cambio obligatorio (primer inicio de sesión)
+    first_login = request.args.get('first_login', 'False') == 'True'
+
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        current_password = form.current_password.data
+        new_password = form.new_password.data
+
+        # Buscar el usuario
+        users = user_sheet.get_all_records()
+        user = next((u for u in users if u['Username'] == session['username']), None)
+
+        if user:
+            # Verificar la contraseña actual
+            if not bcrypt.checkpw(current_password.encode('utf-8'), user['Password'].encode('utf-8')):
+                flash('La contraseña actual es incorrecta.', 'danger')
+                return render_template('change_password.html', form=form, first_login=first_login)
+
+            # Verificar si la nueva contraseña es igual a la contraseña actual
+            if bcrypt.checkpw(new_password.encode('utf-8'), user['Password'].encode('utf-8')):
+                flash('La nueva contraseña no puede ser igual a la contraseña actual.', 'danger')
+                return render_template('change_password.html', form=form, first_login=first_login)
+
+            # Cifrar la nueva contraseña
+            new_hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+            # Actualizar la contraseña y FirstLogin en Google Sheets usando el row_index almacenado en la sesión
+            row_index = session['row_index']
+            user_sheet.update_cell(row_index, 2, new_hashed_password)  # Columna 2 es Password
+            user_sheet.update_cell(row_index, 4, 'False')  # Columna 4 es FirstLogin, lo ponemos en False
+
+            # Actualizar FirstLogin en la sesión
+            session['first_login'] = 'False'
+
+            # Registrar en el historial
+            new_entry = {
+                'Fila': row_index,
+                'Columna': 'Password',
+                'Valor Anterior': '********',  # No mostramos la contraseña anterior por seguridad
+                'Nuevo Valor': '********',     # No mostramos la nueva contraseña por seguridad
+                'Usuario': session['username'],
+                'Fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Observaciones': 'Cambio de contraseña'
+            }
+            history_sheet.append_row([new_entry['Fila'], new_entry['Columna'], new_entry['Valor Anterior'], 
+                                     new_entry['Nuevo Valor'], new_entry['Usuario'], new_entry['Fecha'], 
+                                     new_entry['Observaciones']])
+
+            flash('Contraseña actualizada con éxito.', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Usuario no encontrado.', 'danger')
+
+    return render_template('change_password.html', form=form, first_login=first_login)
+
 # Ruta para la página de administración de usuarios
 @app.route('/admin/users', methods=['GET', 'POST'])
 @login_required
@@ -182,7 +250,7 @@ def admin_users():
                     user_sheet.delete_rows(row_index)
                     flash("Usuario eliminado correctamente.", "success")
                 except Exception as e:
-                    flash(f"Error al eliminar usuario: {str(e)}", "error")
+                    flash(f"Error al eliminar usuario: {str(e)}", "danger")
                 return redirect(url_for('admin_users'))
 
             elif action == 'edit':
@@ -193,7 +261,7 @@ def admin_users():
                 try:
                     users = user_sheet.get_all_records()
                     if any(user['Username'] == username and user != users[row_index - 1] for user in users):
-                        flash("El nombre de usuario ya existe.", "error")
+                        flash("El nombre de usuario ya existe.", "danger")
                         return redirect(url_for('admin_users'))
 
                     # Si se proporciona una nueva contraseña, cifrarla; si no, mantener la existente
@@ -203,11 +271,11 @@ def admin_users():
                         hashed_password = users[row_index - 1]['Password']  # Mantener la contraseña existente
 
                     # Actualizar la fila en la hoja
-                    user_sheet.update_row(row_index, [username, hashed_password, role])
+                    user_sheet.update_row(row_index, [username, hashed_password, role, users[row_index - 1].get('FirstLogin', 'False')])
 
                     flash("Usuario actualizado correctamente.", "success")
                 except Exception as e:
-                    flash(f"Error al actualizar usuario: {str(e)}", "error")
+                    flash(f"Error al actualizar usuario: {str(e)}", "danger")
                 return redirect(url_for('admin_users'))
 
     if form.validate_on_submit():
@@ -218,12 +286,13 @@ def admin_users():
         try:
             users = user_sheet.get_all_records()
             if any(user['Username'] == username for user in users):
-                flash("El nombre de usuario ya existe.", "error")
+                flash("El nombre de usuario ya existe.", "danger")
                 return redirect(url_for('admin_users'))
 
             # Cifrar la contraseña antes de almacenarla
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            user_sheet.append_row([username, hashed_password, role])
+            # Agregar el nuevo usuario con FirstLogin=True
+            user_sheet.append_row([username, hashed_password, role, 'True'])
 
             # Registrar en el historial
             row_index = len(user_sheet.get_all_values())
@@ -243,7 +312,7 @@ def admin_users():
             flash("Usuario agregado correctamente.", "success")
             return redirect(url_for('admin_users'))
         except Exception as e:
-            flash(f"Error al agregar usuario: {str(e)}", "error")
+            flash(f"Error al agregar usuario: {str(e)}", "danger")
 
     users = user_sheet.get_all_records()
     return render_template('admin.html', form=form, users=users, role=session.get('role', ''))
@@ -258,7 +327,7 @@ def edit_user(username):
     user = next((u for u in users if u['Username'] == username), None)
 
     if not user:
-        flash("Usuario no encontrado.", "error")
+        flash("Usuario no encontrado.", "danger")
         return redirect(url_for('admin_users'))
 
     row_index = users.index(user) + 2  # +2 porque las filas en Google Sheets empiezan en 1 y hay un encabezado
@@ -270,12 +339,20 @@ def edit_user(username):
 
         try:
             if new_username != username and any(u['Username'] == new_username for u in users):
-                flash("El nombre de usuario ya existe.", "error")
+                flash("El nombre de usuario ya existe.", "danger")
                 return redirect(url_for('edit_user', username=username))
 
+            # Si se proporciona una nueva contraseña, cifrarla; si no, mantener la existente
+            if password:
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            else:
+                hashed_password = user['Password']
+
             user_sheet.update_cell(row_index, 1, new_username)
-            user_sheet.update_cell(row_index, 2, password)
+            user_sheet.update_cell(row_index, 2, hashed_password)
             user_sheet.update_cell(row_index, 3, role)
+            # Mantener el valor de FirstLogin
+            user_sheet.update_cell(row_index, 4, user.get('FirstLogin', 'False'))
 
             # Registrar en el historial
             new_entry = {
@@ -294,11 +371,11 @@ def edit_user(username):
             flash("Usuario actualizado correctamente.", "success")
             return redirect(url_for('admin_users'))
         except Exception as e:
-            flash(f"Error al actualizar usuario: {str(e)}", "error")
+            flash(f"Error al actualizar usuario: {str(e)}", "danger")
 
     # Prellenar el formulario con los datos del usuario
     form.username.data = user['Username']
-    form.password.data = user['Password']
+    form.password.data = ''  # No mostramos la contraseña actual por seguridad
     form.role.data = user['Role']
     return render_template('edit_user.html', form=form, username=username, role=session.get('role', ''))
 
@@ -312,11 +389,11 @@ def delete_user(username):
         user = next((u for u in users if u['Username'] == username), None)
 
         if not user:
-            flash("Usuario no encontrado.", "error")
+            flash("Usuario no encontrado.", "danger")
             return redirect(url_for('admin_users'))
 
         if user['Username'] == session['username']:
-            flash("No puedes eliminar tu propio usuario.", "error")
+            flash("No puedes eliminar tu propio usuario.", "danger")
             return redirect(url_for('admin_users'))
 
         row_index = users.index(user) + 2
@@ -338,7 +415,7 @@ def delete_user(username):
 
         flash("Usuario eliminado correctamente.", "success")
     except Exception as e:
-        flash(f"Error al eliminar usuario: {str(e)}", "error")
+        flash(f"Error al eliminar usuario: {str(e)}", "danger")
     return redirect(url_for('admin_users'))
 
 @app.route('/api/datos', methods=['GET'])
